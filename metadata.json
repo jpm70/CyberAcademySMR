@@ -1,0 +1,6 @@
+{
+  "name": "CyberAcademy SMR: Aventura Point & Click",
+  "description": "Simulador gráfico interactivo estilo anime/visual novel para formación de alumnos del certificado Sistemas Microinformáticos y Redes (SMR) por Un Fantasma en el Sistema.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

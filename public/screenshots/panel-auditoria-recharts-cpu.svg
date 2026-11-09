@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 520" width="920" height="520" fill="none">
+  <defs>
+    <linearGradient id="auditBg" x1="0" y1="0" x2="920" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#020617"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="hdrGrad" x1="0" y1="0" x2="880" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="50%" stop-color="#451A03"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="920" height="520" rx="16" fill="url(#auditBg)"/>
+
+  <!-- Contenedor del Panel de Auditoría Flotante + Gráfica Recharts de CPU -->
+  <rect x="20" y="18" width="880" height="484" rx="14" fill="#020617" stroke="#FBBF24" stroke-width="2"/>
+
+  <!-- Cabecera -->
+  <path d="M21 31 C21 24.3726 26.3726 19 33 19 H887 C893.627 19 899 24.3726 899 31 V56 H21 V31 Z" fill="url(#hdrGrad)"/>
+  <line x1="21" y1="56" x2="899" y2="56" stroke="#F59E0B" stroke-opacity="0.45"/>
+  <text x="42" y="42" fill="#FCD34D" font-family="Segoe UI, sans-serif" font-size="14" font-weight="bold">
+    📋 Auditoría de Eventos SMR en Tiempo Real + Telemetría CPU (Recharts)
+  </text>
+
+  <rect x="738" y="27" width="86" height="22" rx="5" fill="#1E293B" stroke="#475569"/>
+  <text x="750" y="42" fill="#7DD3FC" font-family="Consolas, monospace" font-size="10.5" font-weight="bold">&gt;_ Volcar CMD</text>
+
+  <rect x="832" y="27" width="52" height="22" rx="5" fill="#1E293B" stroke="#475569"/>
+  <text x="843" y="42" fill="#E2E8F0" font-family="Consolas, monospace" font-size="10.5">Cerrar</text>
+
+  <!-- Fila de Indicadores de Estado del Sistema Virtual -->
+  <g font-family="Consolas, monospace" font-size="11">
+    <rect x="36" y="68" width="156" height="28" rx="6" fill="#022C22" stroke="#10B981" stroke-opacity="0.6"/>
+    <text x="48" y="86" fill="#6EE7B7">Rack RJ45: <tspan font-weight="bold" fill="#A7F3D0">ON</tspan></text>
+
+    <rect x="202" y="68" width="156" height="28" rx="6" fill="#022C22" stroke="#10B981" stroke-opacity="0.6"/>
+    <text x="214" y="86" fill="#6EE7B7">Arranque: <tspan font-weight="bold" fill="#A7F3D0">OK (MBR)</tspan></text>
+
+    <rect x="368" y="68" width="156" height="28" rx="6" fill="#022C22" stroke="#10B981" stroke-opacity="0.6"/>
+    <text x="380" y="86" fill="#6EE7B7">AV /S: <tspan font-weight="bold" fill="#A7F3D0">OK (Exit 0)</tspan></text>
+
+    <rect x="534" y="68" width="156" height="28" rx="6" fill="#022C22" stroke="#10B981" stroke-opacity="0.6"/>
+    <text x="546" y="86" fill="#6EE7B7">CPU Load: <tspan font-weight="bold" fill="#A7F3D0">8%</tspan></text>
+
+    <rect x="700" y="68" width="184" height="28" rx="6" fill="#022C22" stroke="#10B981" stroke-opacity="0.6"/>
+    <text x="712" y="86" fill="#6EE7B7">DHCP: <tspan font-weight="bold" fill="#A7F3D0">192.168.1.105</tspan></text>
+  </g>
+
+  <!-- Widget Recharts de Uso de CPU en Tiempo Real (Antes y Después de taskkill /F /IM bucle.exe) -->
+  <rect x="36" y="106" width="848" height="172" rx="10" fill="#090D16" stroke="#1E293B" stroke-width="1.5"/>
+  <text x="52" y="128" fill="#E2E8F0" font-family="Consolas, monospace" font-size="12" font-weight="bold">
+    🖥️ Monitor CPU (Tiempo Real · Recharts LineChart) — Impacto de bucle.exe antes y después de taskkill
+  </text>
+  <rect x="676" y="113" width="194" height="22" rx="5" fill="#022C22" stroke="#10B981"/>
+  <text x="688" y="128" fill="#6EE7B7" font-family="Consolas, monospace" font-size="10.5" font-weight="bold">
+    bucle.exe: OFF (8% Nominal)
+  </text>
+
+  <!-- Área de la gráfica Recharts -->
+  <rect x="52" y="140" width="816" height="110" rx="6" fill="#0F172A" stroke="#1E293B"/>
+  <!-- Líneas de rejilla Y (100%, 85% umbral, 50%, 0%) -->
+  <line x1="88" y1="152" x2="852" y2="152" stroke="#1E293B" stroke-dasharray="3 3"/>
+  <text x="58" y="156" fill="#64748B" font-family="Consolas, monospace" font-size="9.5">100%</text>
+
+  <!-- ReferenceLine 85% -->
+  <line x1="88" y1="167" x2="852" y2="167" stroke="#F59E0B" stroke-dasharray="4 4" stroke-opacity="0.8"/>
+  <text x="765" y="163" fill="#FBBF24" font-family="Consolas, monospace" font-size="9">Umbral Crítico 85%</text>
+
+  <line x1="88" y1="196" x2="852" y2="196" stroke="#1E293B" stroke-dasharray="3 3"/>
+  <text x="63" y="200" fill="#64748B" font-family="Consolas, monospace" font-size="9.5">50%</text>
+
+  <line x1="88" y1="238" x2="852" y2="238" stroke="#1E293B" stroke-dasharray="3 3"/>
+  <text x="68" y="242" fill="#64748B" font-family="Consolas, monospace" font-size="9.5">0%</text>
+
+  <!-- Tramo Rojo (Antes de taskkill: bucle.exe PID 4812 al 99% CPU) -->
+  <polyline
+    points="95,153 145,152 195,154 245,152 295,153 345,152 395,153 445,152"
+    fill="none"
+    stroke="#FB7185"
+    stroke-width="3"
+  />
+  <text x="155" y="148" fill="#FDA4AF" font-family="Consolas, monospace" font-size="9.5" font-weight="bold">
+    ▲ bucle.exe activo (PID 4812 · 99% CPU · Thermal Throttling 94°C)
+  </text>
+
+  <!-- Caída en picado al ejecutar taskkill /F /IM bucle.exe y tramo Verde Esmeralda (8% CPU) -->
+  <polyline
+    points="445,152 495,228 545,231 595,229 645,232 695,230 745,231 795,229 845,231"
+    fill="none"
+    stroke="#34D399"
+    stroke-width="3"
+  />
+  <circle cx="495" cy="228" r="4.5" fill="#34D399"/>
+  <text x="510" y="220" fill="#6EE7B7" font-family="Consolas, monospace" font-size="9.5" font-weight="bold">
+    ▼ taskkill /F /IM bucle.exe ejecutado ──&gt; Caída inmediata al 8% CPU (42°C)
+  </text>
+
+  <text x="52" y="268" fill="#94A3B8" font-family="Consolas, monospace" font-size="10">
+    ⚡ Impacto: Carga liberada tras taskkill /F /IM bucle.exe · Estados de reposo ACPI C6 restaurados (88.4%)
+  </text>
+
+  <!-- Pestañas de filtro por categoría -->
+  <g font-family="Consolas, monospace" font-size="10">
+    <rect x="36" y="286" width="58" height="20" rx="4" fill="#FBBF24"/>
+    <text x="47" y="300" fill="#020617" font-weight="bold">Todos</text>
+
+    <rect x="100" y="286" width="68" height="20" rx="4" fill="#0F172A" stroke="#1E293B"/>
+    <text x="110" y="300" fill="#CBD5E1">Rack/HW</text>
+
+    <rect x="174" y="286" width="52" height="20" rx="4" fill="#0F172A" stroke="#1E293B"/>
+    <text x="186" y="300" fill="#CBD5E1">Boot</text>
+
+    <rect x="232" y="286" width="64" height="20" rx="4" fill="#0F172A" stroke="#1E293B"/>
+    <text x="242" y="300" fill="#CBD5E1">Soft /S</text>
+
+    <rect x="302" y="286" width="48" height="20" rx="4" fill="#0F172A" stroke="#1E293B"/>
+    <text x="314" y="300" fill="#CBD5E1">CPU</text>
+
+    <rect x="356" y="286" width="58" height="20" rx="4" fill="#0F172A" stroke="#1E293B"/>
+    <text x="366" y="300" fill="#CBD5E1">Red/IP</text>
+
+    <rect x="420" y="286" width="64" height="20" rx="4" fill="#0F172A" stroke="#1E293B"/>
+    <text x="430" y="300" fill="#CBD5E1">Sistema</text>
+  </g>
+
+  <!-- Eventos registrados en la bitácora -->
+  <g font-family="Consolas, monospace">
+    <rect x="36" y="314" width="848" height="52" rx="8" fill="#0F172A" stroke="#1E293B"/>
+    <rect x="48" y="322" width="38" height="16" rx="3" fill="#022C22" stroke="#10B981"/>
+    <text x="56" y="334" fill="#6EE7B7" font-size="9.5" font-weight="bold">OK</text>
+    <text x="94" y="334" fill="#FCD34D" font-size="10.5" font-weight="bold">[EVT-4012] M4 · PROCESOS</text>
+    <text x="265" y="334" fill="#FFFFFF" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold">
+      Terminación forzosa de proceso crítico (bucle.exe PID 4812)
+    </text>
+    <text x="48" y="354" fill="#CBD5E1" font-size="10.5">
+      proceso_terminado: false -&gt; true (Liberados 1.894.520 KB de RAM; carga de CPU reducida del 99% al 8%).
+    </text>
+
+    <rect x="36" y="374" width="848" height="52" rx="8" fill="#0F172A" stroke="#1E293B"/>
+    <rect x="48" y="382" width="38" height="16" rx="3" fill="#022C22" stroke="#10B981"/>
+    <text x="56" y="394" fill="#6EE7B7" font-size="9.5" font-weight="bold">OK</text>
+    <text x="94" y="394" fill="#FCD34D" font-size="10.5" font-weight="bold">[EVT-3040] M4 · SISTEMA</text>
+    <text x="265" y="394" fill="#FFFFFF" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold">
+      Verificación de integridad de archivos (sfc /scannow)
+    </text>
+    <text x="48" y="414" fill="#CBD5E1" font-size="10.5">
+      Comprobación del 100% completada: Protección de recursos de Windows confirmó 4.812 archivos íntegros en System32 y WinSxS.
+    </text>
+
+    <rect x="36" y="434" width="848" height="52" rx="8" fill="#0F172A" stroke="#1E293B"/>
+    <rect x="48" y="442" width="38" height="16" rx="3" fill="#082F49" stroke="#38BDF8"/>
+    <text x="53" y="454" fill="#7DD3FC" font-size="9.5" font-weight="bold">INFO</text>
+    <text x="94" y="454" fill="#FCD34D" font-size="10.5" font-weight="bold">[EVT-1060] M5 · RED_DHCP</text>
+    <text x="265" y="454" fill="#FFFFFF" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="bold">
+      Consulta de tabla de nombres NetBIOS remotos (nbtstat -A 192.168.1.50)
+    </text>
+    <text x="48" y="474" fill="#CBD5E1" font-size="10.5">
+      Nodo remoto resuelto: NAS-CONTA-01 (192.168.1.50 · MAC 00-50-56-C0-00-50 · Servicio Servidor SMB &lt;20&gt;: Registrado).
+    </text>
+  </g>
+</svg>
