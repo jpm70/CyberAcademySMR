@@ -79,7 +79,7 @@ export const VIRTUAL_FILE_SYSTEM: Record<VirtualDirPath, VirtualFileEntry[]> = {
       date: '04/11/2026',
       time: '08:15',
       content:
-        '[WinRE Diagnostics] Error detectado en disco 0: BOOTMGR is missing. Ejecute bootrec /fixmbr y bootrec /fixboot.',
+        '[WinRE Diagnostics] Error detectado en disco 0 (MBR / BIOS heredada): BOOTMGR is missing. Revise el código de arranque maestro y el sector de arranque de la partición activa.',
     },
   ],
   'C:\\Users\\Tecnico': [
@@ -94,7 +94,7 @@ export const VIRTUAL_FILE_SYSTEM: Record<VirtualDirPath, VirtualFileEntry[]> = {
       date: '04/11/2026',
       time: '08:20',
       content:
-        'Gateway Oficina de Soporte: 192.168.1.1 (Puerto Troncal Gi0/1 en el Rack de Comunicaciones). Rango DHCP: 192.168.1.100 - 192.168.1.200.',
+        'Gateway Oficina de Soporte: 192.168.1.1 (Puerto Troncal Gi0/1 en el Rack de Comunicaciones). Ámbito DHCP: 192.168.1.50 - 192.168.1.200. OJO: las IP fijas (servidores, NAS, impresoras) deben ir FUERA del ámbito o como reserva DHCP.',
     },
     {
       name: 'inventario_rack.csv',
@@ -114,7 +114,7 @@ export const VIRTUAL_FILE_SYSTEM: Record<VirtualDirPath, VirtualFileEntry[]> = {
       date: '04/11/2026',
       time: '09:14',
       isExecutable: true,
-      recommendedArgs: ['antivirus_setup.exe /S', 'antivirus_setup.exe /?'],
+      recommendedArgs: ['antivirus_setup.exe /?'],
     },
     {
       name: 'ticket_304.txt',
@@ -123,7 +123,7 @@ export const VIRTUAL_FILE_SYSTEM: Record<VirtualDirPath, VirtualFileEntry[]> = {
       date: '04/11/2026',
       time: '08:50',
       content:
-        'TICKET #304 (Prioridad Alta): Desplegar antivirus_setup.exe en modo desatendido (/S) para no mostrar ventanas ni interrumpir al usuario.',
+        'TICKET #304 (Prioridad Alta): Desplegar antivirus_setup.exe en modo desatendido para no mostrar ventanas ni interrumpir al usuario.',
     },
     {
       name: 'leeme_despliegue.txt',
@@ -132,7 +132,7 @@ export const VIRTUAL_FILE_SYSTEM: Record<VirtualDirPath, VirtualFileEntry[]> = {
       date: '04/11/2026',
       time: '08:48',
       content:
-        'Uso del instalador corporativo: ejecute "antivirus_setup.exe /S" desde la consola para instalación silenciosa.',
+        'Instalador corporativo generado con NSIS. Ejecute "antivirus_setup.exe /?" para ver los modificadores. Recuerde: en NSIS los modificadores distinguen mayúsculas.',
     },
   ],
   'C:\\Users\\Tecnico\\Documents': [
@@ -163,7 +163,7 @@ export const VIRTUAL_FILE_SYSTEM: Record<VirtualDirPath, VirtualFileEntry[]> = {
       date: '04/11/2026',
       time: '08:00',
       content:
-        'Comandos clave SMR: ping 192.168.1.1 | bootrec /fixmbr | bootrec /fixboot | antivirus_setup.exe /S | tasklist | taskkill /F /IM bucle.exe | ipconfig /release | ipconfig /renew',
+        'Caja de herramientas SMR: ping | ipconfig | arp | tracert | nbtstat | netstat | tasklist | taskkill | powercfg | sfc | bootrec (solo en WinRE). Añade /? a cualquier comando para ver su ayuda.',
     },
   ],
   'C:\\Users\\Tecnico\\Scripts': [
@@ -212,7 +212,7 @@ export const SMR_ACHIEVEMENTS: AchievementDef[] = [
     title: 'Despliegue Fantasma (Silent Admin)',
     englishSubtitle: 'Flawless Unattended Setup',
     description:
-      'Ejecuta antivirus_setup.exe /S al primer intento sin hacer saltar la ventana gráfica que interrumpe al usuario.',
+      'Despliega el antivirus en modo desatendido al primer intento, sin hacer saltar la ventana gráfica que interrumpe al usuario.',
     conditionLabel: 'Completar Misión 3 sin errores de GUI',
     iconType: 'stealth',
   },
@@ -221,7 +221,7 @@ export const SMR_ACHIEVEMENTS: AchievementDef[] = [
     title: 'Cazador de Procesos (Kernel Guardian)',
     englishSubtitle: 'Runaway Process Terminator',
     description:
-      'Localiza bucle.exe mediante tasklist y libera el 99% de CPU ejecutando taskkill /F /IM bucle.exe.',
+      'Localiza desde la consola el proceso que satura la CPU y termínalo para liberar el equipo.',
     conditionLabel: 'Superar la Misión 4 (Proceso Rebelde)',
     iconType: 'cpu',
   },
@@ -239,7 +239,7 @@ export const SMR_ACHIEVEMENTS: AchievementDef[] = [
     title: 'Asistente Empático (Helpdesk Gold)',
     englishSubtitle: 'First-Try Soft Skills & Recovery',
     description:
-      'Tranquiliza al usuario de contabilidad y recupera su informe mediante Autorecuperación al primer intento sin culparle.',
+      'Tranquiliza al usuario de contabilidad y recupera su informe mediante Autorrecuperación al primer intento sin culparle.',
     conditionLabel: 'Superar Misión 6 al primer intento',
     iconType: 'empathy',
   },
@@ -257,14 +257,15 @@ export const SMR_ACHIEVEMENTS: AchievementDef[] = [
 export const SMR_THEORY_SHEETS: Record<number, MissionTheory> = {
   1: {
     missionId: 1,
-    moduleCode: 'MF0220_2',
-    moduleName: 'Implantación de Elementos de la Red Local',
+    moduleCode: 'MF0220_2 · UF0855',
+    moduleName: 'Verificación y resolución de incidencias en una red de área local',
     conceptTitle: 'Diagnóstico en Capa 1 (Física) vs Capa 3 (Red) del Modelo OSI',
     summary:
       'Ante una caída de red, el técnico SMR siempre debe descartar primero un fallo en la Capa 1 (Física: cable UTP desconectado, conector RJ45 dañado o puerto del switch apagado) antes de modificar configuraciones IP.',
     technicalDeepDive: [
       'El comando "ping 127.0.0.1" (dirección de loopback) comprueba que la pila TCP/IP de nuestro propio sistema operativo funciona, incluso con el cable desconectado.',
-      'El comando "ping 192.168.1.1" envía paquetes ICMP Echo Request a la Puerta de Enlace (Router). Si devuelve "Tiempo de espera agotado", no hay respuesta del destino.',
+      'El comando "ping 192.168.1.1" envía paquetes ICMP Echo Request a la Puerta de Enlace (Router). "Tiempo de espera agotado" significa que el paquete salió pero nadie contestó; "Error general" significa que ni siquiera pudo salir del equipo (por ejemplo, sin enlace físico).',
+      'Con el cable desconectado, "ipconfig" muestra "Estado de los medios: medios desconectados" y ninguna IP. Una IP APIPA (169.254.x.x) indica otra cosa: hay enlace, pero ningún servidor DHCP ha respondido.',
       'La norma EIA/TIA-568B define el orden de los 8 hilos de cobre en el conector RJ45. Los pines 1, 2 (transmisión) y 3, 6 (recepción) son esenciales en FastEthernet, y los 8 hilos en GigabitEthernet.',
     ],
     keyCommands: [
@@ -287,8 +288,8 @@ export const SMR_THEORY_SHEETS: Record<number, MissionTheory> = {
   },
   2: {
     missionId: 2,
-    moduleCode: 'MF0219_2',
-    moduleName: 'Instalación y Configuración de Sistemas Operativos',
+    moduleCode: 'MF0219_2 · UF0852',
+    moduleName: 'Instalación y actualización de sistemas operativos',
     conceptTitle: 'Secuencia de Arranque, MBR, Sector de Partición y Entorno WinRE',
     summary:
       'Cuando el gestor de arranque de Windows (BOOTMGR) se corrompe o desaparece, el sistema detiene la carga tras el POST de la BIOS. Es necesario iniciar desde un medio externo (Pendrive USB con ISO) y usar la consola de recuperación.',
@@ -296,6 +297,7 @@ export const SMR_THEORY_SHEETS: Record<number, MissionTheory> = {
       '1. BIOS/UEFI inicializa el hardware (POST) y busca el dispositivo de arranque según el orden configurado (Boot Priority).',
       '2. En discos con particionado MBR, el primer sector físico (512 bytes) contiene el Master Boot Record (código de arranque + tabla de particiones). Se repara con "bootrec /fixmbr".',
       '3. El sector de arranque de la partición activa invoca al archivo BOOTMGR, que a su vez lee el almacén BCD (Boot Configuration Data). Se repara con "bootrec /fixboot" y "bootrec /rebuildbcd".',
+      '4. Ojo en equipos modernos: con UEFI y disco GPT no hay MBR ni sector de arranque que reparar; el cargador vive en la partición EFI y se regenera con "bcdboot C:\\Windows". Además, desde Windows 10 1709 "bootrec /fixboot" suele devolver "Acceso denegado".',
     ],
     keyCommands: [
       { cmd: 'bootrec /fixmbr', desc: 'Escribe un nuevo Registro de Arranque Maestro compatible en el primer sector del disco.' },
@@ -313,13 +315,13 @@ export const SMR_THEORY_SHEETS: Record<number, MissionTheory> = {
   },
   3: {
     missionId: 3,
-    moduleCode: 'MF0219_2 / MF0221_2',
-    moduleName: 'Despliegue y Mantenimiento de Software Corporativo',
+    moduleCode: 'MF0221_2',
+    moduleName: 'Instalación y configuración de aplicaciones informáticas',
     conceptTitle: 'Instalación Desatendida (Silent Install) mediante Parámetros CLI',
     summary:
-      'En entornos empresariales, los técnicos desplieggan paquetes de software (como agentes antivirus o parches) en segundo plano para no interrumpir la productividad del empleado ni requerir confirmación en ventanas gráficas.',
+      'En entornos empresariales, los técnicos despliegan paquetes de software (como agentes antivirus o parches) en segundo plano para no interrumpir la productividad del empleado ni requerir confirmación en ventanas gráficas.',
     technicalDeepDive: [
-      'Los instaladores ejecutables (.exe basados en NSIS/InnoSetup) utilizan modificadores como "/S", "/VERYSILENT" o "/silent" para suprimir toda interfaz gráfica (GUI).',
+      'Cada generador de instaladores usa sus propios modificadores: NSIS usa "/S" (distingue mayúsculas: "/s" se ignora), Inno Setup "/SILENT" o "/VERYSILENT". Por eso conviene consultar siempre la ayuda del instalador antes de desplegarlo.',
       'Los paquetes Windows Installer (.msi) se ejecutan mediante "msiexec /i paquete.msi /qn", donde "/qn" indica Quiet (sin interfaz de usuario).',
       'Antes de ejecutar el paquete desde la consola, es buena práctica consultar los modificadores admitidos con "antivirus_setup.exe /?" o navegar al directorio con "cd Descargas".',
     ],
@@ -343,15 +345,15 @@ export const SMR_THEORY_SHEETS: Record<number, MissionTheory> = {
   },
   4: {
     missionId: 4,
-    moduleCode: 'MF0219_2',
-    moduleName: 'Administración de Procesos y Recursos del Sistema',
+    moduleCode: 'MF0219_2 · UF0853',
+    moduleName: 'Explotación de las funcionalidades del sistema microinformático',
     conceptTitle: 'Diagnóstico de Cuellos de Botella y Finalización Forzada de Procesos',
     summary:
       'Cuando un proceso entra en un bucle infinito o sufre una fuga de memoria (Memory Leak), acapara el tiempo de CPU (99%) y bloquea la interfaz gráfica. La línea de comandos permite identificar su PID y finalizarlo de inmediato.',
     technicalDeepDive: [
       'Cada programa en ejecución recibe un identificador único llamado PID (Process Identifier) asignado por el kernel del sistema operativo.',
       'El comando "tasklist" muestra todos los procesos activos, su nombre de imagen, su PID y la memoria RAM consumida.',
-      'En "taskkill /F /IM bucle.exe", el parámetro "/F" fuerza la terminación inmediata (enviando la señal de cierre a nivel de kernel) y "/IM" especifica el nombre de la imagen ejecutable (también puede usarse "/PID 4812").',
+      'Sin "/F", taskkill solo pide al programa que se cierre, y un proceso colgado no atiende esa petición. En "taskkill /F /IM bucle.exe", "/F" obliga al sistema a terminarlo y "/IM" indica el nombre de la imagen ejecutable (también puede usarse "/PID 4812").',
     ],
     keyCommands: [
       { cmd: 'tasklist', desc: 'Enumera todos los procesos en ejecución junto con su PID y uso de memoria.' },
@@ -373,8 +375,8 @@ export const SMR_THEORY_SHEETS: Record<number, MissionTheory> = {
   },
   5: {
     missionId: 5,
-    moduleCode: 'MF0220_2',
-    moduleName: 'Resolución de Incidencias en Redes Locales (DHCP)',
+    moduleCode: 'MF0220_2 · UF0855',
+    moduleName: 'Verificación y resolución de incidencias en una red de área local',
     conceptTitle: 'Conflicto de Direcciones IPv4 y Ciclo DORA del Protocolo DHCP',
     summary:
       'Si dos equipos en la misma subred poseen idéntica dirección IPv4 (ej. 192.168.1.50), se produce una colisión en las tablas ARP y ambos pierden conectividad. Renovar la concesión DHCP asigna una IP libre del rango.',
@@ -382,6 +384,7 @@ export const SMR_THEORY_SHEETS: Record<number, MissionTheory> = {
       'El protocolo DHCP opera en 4 fases conocidas como DORA: Discover (el cliente busca servidor), Offer (el servidor ofrece una IP), Request (el cliente la solicita) y Acknowledge (el servidor confirma la concesión).',
       'Al ejecutar "ipconfig /release", el cliente envía un paquete DHCPRELEASE al servidor y su interfaz queda temporalmente en 0.0.0.0.',
       'Al ejecutar "ipconfig /renew", el cliente inicia un nuevo ciclo DHCP y obtiene una dirección IPv4 libre de conflictos (192.168.1.105).',
+      'Esto apaga el incendio, pero la causa sigue ahí: el NAS tiene una IP fija DENTRO del ámbito DHCP. La solución definitiva es mover las IP fijas fuera del ámbito, excluirlas del ámbito o crear una reserva DHCP para ese equipo.',
     ],
     keyCommands: [
       { cmd: 'ipconfig /all', desc: 'Muestra la configuración detallada: MAC, servidor DHCP, DNS y tiempos de concesión.' },
@@ -399,31 +402,33 @@ export const SMR_THEORY_SHEETS: Record<number, MissionTheory> = {
   },
   6: {
     missionId: 6,
-    moduleCode: 'MF0222_2',
-    moduleName: 'Aplicaciones Microinformáticas y Asistencia al Usuario (Helpdesk)',
-    conceptTitle: 'Habilidades Blandas (Soft Skills), Escucha Activa y Autorecuperación Ofimática',
+    moduleCode: 'MF0222_2 · UF0856',
+    moduleName: 'Asistencia a usuarios (Helpdesk)',
+    conceptTitle: 'Habilidades Blandas (Soft Skills), Escucha Activa y Autorrecuperación Ofimática',
     summary:
       'El técnico de soporte (Nivel 1 / Helpdesk) no solo resuelve problemas técnicos: debe gestionar el estrés del usuario mediante empatía, evitando tecnicismos agresivos o respuestas evasivas, y aplicando procedimientos de recuperación de datos.',
     technicalDeepDive: [
       '1. Contención emocional (Empatía): Usar un tono calmado ("Tranquilo, vamos a revisarlo...") reduce la tensión del usuario y facilita su colaboración.',
       '2. Cero culpabilización: Jamás se debe reprochar al usuario no haber pulsado Guardar ("es tu culpa").',
-      '3. Solución técnica en suites ofimáticas: Tanto MS Word como LibreOffice guardan copias temporales periódicas (.asd / .bak) accesibles desde Archivo > Información > Administrar documento > Recuperar documentos no guardados.',
+      '3. Solución técnica en Word: la Autorrecuperación guarda copias periódicas (.asd) y al reabrir Word aparece el panel de Recuperación de documentos; si no, Archivo > Información > Administrar documento > Recuperar documentos no guardados.',
+      '4. En LibreOffice Writer el mecanismo es otro: al reiniciar tras un cierre inesperado se abre el asistente de Recuperación de documentos (Herramientas > Opciones > Cargar/Guardar > Guardar información de autorrecuperación).',
     ],
     keyCommands: [
-      { cmd: 'Archivo > Información > Autorecuperación', desc: 'Ruta estándar para restaurar copias de seguridad automáticas (.asd).' },
-      { cmd: '%AppData%\\Microsoft\\Word\\', desc: 'Directorio local donde suelen almacenarse los archivos temporales de recuperación.' },
+      { cmd: 'Archivo > Información > Administrar documento', desc: 'Ruta de Word para recuperar documentos no guardados (copias .asd).' },
+      { cmd: '%AppData%\\Microsoft\\Word\\', desc: 'Ubicación por defecto de los archivos de Autorrecuperación (.asd) de Word.' },
+      { cmd: '%LocalAppData%\\Microsoft\\Office\\UnsavedFiles', desc: 'Documentos que nunca llegaron a guardarse con nombre.' },
     ],
     examQuestion: {
       question:
         'Ante un usuario muy alterado porque se ha cerrado su procesador de textos sin guardar, ¿cuál es la actuación correcta de un técnico de Helpdesk?',
       options: [
         'Explicarle que la memoria RAM es volátil y que es su responsabilidad guardar cada 5 minutos.',
-        'Transmitirle tranquilidad con empatía y guiarle a la función de Autorecuperación en Archivo > Información.',
+        'Transmitirle tranquilidad con empatía y guiarle a la función de Autorrecuperación en Archivo > Información.',
         'Decirle que apague el ordenador inmediatamente.',
       ],
       correctIndex: 1,
       explanation:
-        'Combinar empatía (calmar al usuario) con la solución técnica de Autorecuperación resuelve la incidencia y garantiza la calidad del servicio.',
+        'Combinar empatía (calmar al usuario) con la solución técnica de Autorrecuperación resuelve la incidencia y garantiza la calidad del servicio.',
     },
   },
 };
