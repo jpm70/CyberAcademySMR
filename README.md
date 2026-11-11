@@ -1,184 +1,197 @@
-<div align="center">
+<p align="center">
+  <a href="https://www.unfantasmaenelsistema.com"><img src="docs/logo.png" width="110" alt="Un fantasma en el sistema"></a>
+</p>
 
-<img src="public/assets/aistudio/icono_81a3db5b.png" alt="Un Fantasma en el Sistema Logo" width="110" />
+<h1 align="center">CyberAcademy SMR</h1>
 
-# 🖥️ CyberAcademy SMR: Oficina de Soporte
-### Simulador Interactivo *Point & Click* de Sistemas Microinformáticos y Redes (SMR)
+<p align="center">
+  <b>Aventura point &amp; click para practicar soporte microinformático en una oficina con averías de verdad</b><br>
+  6 misiones · Consola CMD/WinRE simulada · Rack 42U con tester EIA/TIA-568B · Teoría y test por misión · Insignias y expediente imprimible
+</p>
 
-[![React 19](https://img.shields.io/badge/React-19.0-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-8.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.x-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Recharts](https://img.shields.io/badge/Recharts-Real--Time_Telemetry-22C55E)](https://recharts.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-amber.svg)](LICENSE)
+<p align="center">
+  <a href="https://unfantasmaenelsistema.github.io/CyberAcademySMR/"><b>▶ Jugar en el navegador</b></a> ·
+  <a href="https://unfantasmaenelsistema.github.io/CyberAcademySMR/cyberacademy-smr-offline.html"><b>⬇ Versión offline (un solo .html)</b></a> ·
+  <a href="#las-6-misiones">Misiones</a> ·
+  <a href="#en-el-aula">En el aula</a> ·
+  <a href="#desarrollo">Desarrollo</a> ·
+  <a href="https://www.unfantasmaenelsistema.com">unfantasmaenelsistema.com</a> ·
+  <a href="LICENSE">MIT</a>
+</p>
 
-Un videojuego educativo 2D estilo **Anime / Visual Novel ("Walking Simulator" & *Point-and-Click*)** diseñado para el aprendizaje práctico de los módulos formativos del certificado de profesionalidad **Sistemas Microinformáticos y Redes (SMR / IFCT0209)**.
+<p align="center">
+  <img src="https://img.shields.io/badge/navegador-sin_servidor-10b981?style=flat-square" alt="Sin servidor">
+  <img src="https://img.shields.io/badge/offline-1_archivo_.html-0284c7?style=flat-square" alt="Versión offline en un solo archivo">
+  <img src="https://img.shields.io/badge/IFCT0209-MF0219·MF0220·MF0221·MF0222-f59e0b?style=flat-square" alt="IFCT0209">
+  <img src="https://img.shields.io/badge/FP-SMR-8b5cf6?style=flat-square" alt="FP SMR">
+  <img src="https://img.shields.io/badge/licencia-MIT-blue?style=flat-square" alt="MIT">
+</p>
 
-Creado por **[Un Fantasma en el Sistema](https://www.unfantasmaenelsistema.com/)**.
+<p align="center">
+  <img src="docs/capturas/01-m1-diagnostico-capa1.webp" width="900" alt="Misión 1: la consola muestra que el loopback responde, que ipconfig da «medios desconectados» y que el ping a la puerta de enlace devuelve «Error general»; Alice sugiere revisar la Capa 1 y el anillo del Rack de Comunicaciones avisa de un cable suelto">
+</p>
 
-</div>
+Alice, técnica de soporte, y tú atendéis las incidencias de una oficina: un equipo sin red, otro que no arranca, un despliegue que no puede molestar al empleado, un proceso que se come la CPU, una IP duplicada y un usuario al borde del llanto porque ha perdido tres horas de trabajo. Cada avería se diagnostica y se resuelve con las herramientas reales del oficio (`ping`, `ipconfig`, `nbtstat`, `tasklist`, `bootrec`…) en una consola que responde como Windows, y con las manos: conectando un latiguillo en el rack o arrancando desde un pendrive de rescate.
 
----
+Pensado para el certificado de profesionalidad **IFCT0209 Sistemas Microinformáticos** y para el ciclo de FP de Grado Medio **SMR**.
 
-## 📸 Capturas Reales de la Aplicación
+> [!NOTE]
+> Todo funciona en el navegador, sin servidor ni cuentas. El progreso se guarda en el `localStorage` del propio equipo.
 
-### 1. Escena Principal de la Oficina de Soporte, Alice y Consola Interactiva (`cmd.exe`)
-> Escenario 2D interactivo con **Alice** (desplazamiento horizontal suave mediante `window.moverAlice(destinoX, destinoY, mirarIzquierda)`), *hotspots* físicos sobre el **Armario Rack 42U**, **Cajón de Herramientas** y **PC del Técnico**, caja de diálogo ornamentada con retratos dinámicos y ventana de consola flotante.
+## Índice
 
-![Vista General de CyberAcademy SMR: Oficina de Soporte](public/assets/aistudio/Gemini_Generated_Image_k6z8vpk6z8vpk6z8_c474940b.jpg)
+- [Las 6 misiones](#las-6-misiones)
+- [Capturas](#capturas)
+- [La consola](#la-consola)
+- [Cómo se evalúa](#cómo-se-evalúa)
+- [En el aula](#en-el-aula)
+- [Desarrollo](#desarrollo)
+- [Estructura](#estructura)
+- [Novedades de la v2](#novedades-de-la-v2)
+- [Créditos y licencia](#créditos-y-licencia)
 
----
+## Las 6 misiones
 
-### 2. Terminal Avanzado SMR (`VFS`, `tree`, `netsh`, `nbtstat`, `Ctrl+R` y `Ctrl+P`)
-> Consola `C:\Windows\system32\cmd.exe` con **4 temas visuales** (*Matrix Green*, *Classic Windows 95*, *High Contrast*, *PowerShell Blue*), Sistema de Archivos Virtual (**VFS**) con autocompletado de rutas completas mediante `[Tab]`, búsqueda interactiva en tiempo real `[Ctrl+R]` (*reverse-i-search*) y navegación por historial con `[Ctrl+P]` / `[Ctrl+N]` y botones `[▶ Ejecutar]`.
+| Misión | Módulo / UF (IFCT0209) | Incidencia |
+| :---: | :--- | :--- |
+| **M1 · Red local** | MF0220_2 · UF0855 | El equipo se ha quedado sin red y el LED de enlace de la tarjeta está apagado. ¿Fallo físico o de configuración? |
+| **M2 · Arranque** | MF0219_2 · UF0852 | El PC muestra `BOOTMGR is missing` y no arranca. Hay que llegar a la consola de recuperación. |
+| **M3 · Despliegue** | MF0221_2 | Ticket #304: instalar el antivirus corporativo en el equipo de un empleado nuevo sin que aparezca ninguna ventana. |
+| **M4 · Proceso rebelde** | MF0219_2 · UF0853 | Lag terrible y CPU al 99 %. Algún programa colgado se está comiendo el equipo. |
+| **M5 · Conflicto IP** | MF0220_2 · UF0855 | Windows avisa de un conflicto de dirección IP. ¿Con quién chocamos y por qué? |
+| **M6 · Helpdesk** | MF0222_2 · UF0856 | Un usuario de contabilidad ha perdido el informe en el que llevaba tres horas y está muy alterado. |
 
-![Terminal Avanzado SMR con VFS y Buscador Ctrl+R](public/screenshots/terminal-avanzado-smr.svg)
+Las misiones se pueden jugar en cualquier orden. El diálogo describe el **síntoma**, no el comando: Alice reacciona a lo que vas diagnosticando y el botón **Pedir pista** da la solución (y cuenta para la insignia *Expert Debugger*). Cada misión trae una ficha de teoría y una pregunta de autoevaluación en **Teoría y Test SMR**.
 
----
+<details>
+<summary><b>Solucionario para docentes</b> (contiene las soluciones)</summary>
 
-### 3. Panel de Auditoría en Tiempo Real y Gráfica de CPU (`Recharts`)
-> Panel flotante de auditoría (`audit` / `eventvwr`) con indicadores de estado hardware/red en vivo y un **monitor gráfico en tiempo real (`Recharts LineChart`)** que visualiza la saturación del **99% de CPU** provocada por el proceso rebelde `bucle.exe (PID 4812)` y su caída inmediata a valores nominales (**~8%**) tras ejecutar `taskkill /F /IM bucle.exe`.
+| Misión | Diagnóstico | Resolución |
+| :---: | :--- | :--- |
+| M1 | `ping 127.0.0.1` responde; `ipconfig` da *medios desconectados*; `ping 192.168.1.1` da *Error general* (el paquete ni sale) | Rack de Comunicaciones → conectar el latiguillo → `ping 192.168.1.1` |
+| M2 | `BOOTMGR is missing` (disco MBR, BIOS heredada) | Cajón → recoger el pendrive → PC del Técnico (arranca WinRE en `X:\Sources`) → `bootrec /fixmbr` y `bootrec /fixboot` |
+| M3 | `cd Descargas`, `type ticket_304.txt`, `antivirus_setup.exe /?` (instalador NSIS) | `antivirus_setup.exe /S` — con **S mayúscula**: NSIS distingue mayúsculas y `/s` abre el asistente |
+| M4 | `tasklist` (o `netstat -b`, `powercfg /energy`) señala `bucle.exe` (PID 4812) | `taskkill /F /IM bucle.exe` o `taskkill /F /PID 4812` (sin `/F` un proceso colgado no se cierra) |
+| M5 | `ipconfig /all` (`192.168.1.50`, ámbito DHCP `.50–.200`) y `nbtstat -A 192.168.1.50` → es el NAS `NAS-CONTA-01`, con IP fija **dentro** del ámbito | `ipconfig /release` y `ipconfig /renew` (→ `192.168.1.105`). Solución definitiva: sacar la IP fija del ámbito, excluirla o crear una reserva |
+| M6 | — | La respuesta que calma sin culpar **y** acompaña a recuperar la copia `.asd` (Archivo > Información > Administrar documento). Las cuatro respuestas salen en orden aleatorio y sin etiquetas |
 
-![Panel de Auditoría Flotante y Gráfica de CPU Recharts](public/screenshots/panel-auditoria-recharts-cpu.svg)
+</details>
 
----
+## Capturas
 
-### 4. Armario Rack 42U, Tester RJ45 (`EIA/TIA-568B`), Insignias y Certificado Académico
-> Sub-vista interactiva del **Armario de Comunicaciones Rack 42U** con comprobador de continuidad pin a pin (**Pines 1 a 8 según norma EIA/TIA-568B**), sistema de **8 insignias desbloqueables** (incluyendo *Expert Debugger* al resolver las 6 misiones sin pistas) y generación de **Certificado Académico imprimible / PDF**.
+| | |
+| :---: | :---: |
+| <img src="docs/capturas/02-rack-tester-568b.webp" width="440" alt="Armario Rack 42U con el latiguillo ya conectado y el comprobador de continuidad recorriendo los 8 pines de la norma EIA/TIA-568B"> | <img src="docs/capturas/03-m2-winre-bootrec.webp" width="440" alt="Misión 2: inventario con el pendrive WinRE, prioridad de arranque USB en la BIOS y la consola X:\Sources con bootrec /fixmbr y /fixboot completados"> |
+| Rack 42U y tester EIA/TIA-568B | M2: arranque desde el pendrive y `bootrec` en WinRE |
+| <img src="docs/capturas/04-m3-nsis-mayusculas.webp" width="440" alt="Misión 3: la ayuda del instalador avisa de que /S distingue mayúsculas y al lanzar /s en minúscula se abre el asistente gráfico delante del usuario"> | <img src="docs/capturas/05-m4-taskkill-sin-f.webp" width="440" alt="Misión 4: tasklist muestra bucle.exe al 99 % de CPU y taskkill sin /F falla porque el proceso solo se puede terminar forzosamente"> |
+| M3: `/s` no es `/S` en un instalador NSIS | M4: `taskkill` sin `/F` no puede con un proceso colgado |
+| <img src="docs/capturas/06-panel-auditoria.webp" width="440" alt="Panel de auditoría con el estado del rack, el arranque, el antivirus, la CPU y el DHCP, y la gráfica de CPU en tiempo real tras terminar bucle.exe"> | <img src="docs/capturas/07-m5-nbtstat-conflicto.webp" width="440" alt="Misión 5: nbtstat -A 192.168.1.50 revela que la IP en conflicto es del servidor NAS-CONTA-01, configurado con una IP fija dentro del ámbito DHCP"> |
+| Panel de auditoría (`audit`) con la CPU en tiempo real | M5: `nbtstat -A` descubre al NAS con IP fija dentro del ámbito |
+| <img src="docs/capturas/08-m6-helpdesk.webp" width="440" alt="Misión 6: cuatro respuestas posibles al usuario de contabilidad, sin etiquetas y en orden aleatorio"> | <img src="docs/capturas/09-teoria-y-test.webp" width="440" alt="Ficha de teoría de la Misión 5 (MF0220_2 · UF0855) con el ciclo DORA, la causa del conflicto y la pregunta de autoevaluación respondida"> |
+| M6: helpdesk con cuatro respuestas sin pistas visuales | Teoría y test de cada misión |
+| <img src="docs/capturas/10-logros.webp" width="440" alt="Panel de insignias con las 8 insignias y su condición de desbloqueo"> | <img src="docs/capturas/11-expediente.webp" width="440" alt="Expediente académico con el nombre del alumno, misiones 6/6, insignias y nota final, listo para imprimir o guardar en PDF"> |
+| Las 8 insignias | Expediente con nota, imprimible en PDF |
 
-![Armario Rack 42U, Tester EIA/TIA-568B y Logros SMR](public/screenshots/rack-tia568b-y-logros.svg)
+## La consola
 
----
+La consola imita `cmd.exe` en español (y `X:\Sources` en WinRE) con un sistema de archivos virtual. Responde como Windows real, también cuando te equivocas: `bootrec` no existe fuera de WinRE, `taskkill` no encuentra un proceso que no está en marcha, `ipconfig /release` falla con los medios desconectados y un ejecutable no se encuentra si no estás en su carpeta.
 
-## 🎯 Las 6 Misiones del Currículo SMR
-
-| Misión | Módulo / Unidad Formativa | Incidencia Técnica en la Oficina | Resolución Práctica |
-| :---: | :--- | :--- | :--- |
-| **M1** | **Capa Física OSI (Capa 1)** | Sin conexión a la red local (`Destination host unreachable`). El latiguillo RJ45 del **Switch Core Gi0/1** está suelto en el Rack. | Inspeccionar el **Rack 42U**, verificar los 8 hilos **EIA/TIA-568B**, conectar el cable (`cable_conectado = true`) y comprobar con `ping 192.168.1.1` o `netsh interface show interface`. |
-| **M2** | **MF0219_2 (UF0852) · Arranque** | Pantalla crítica **`BOOTMGR is missing`** al encender el equipo del técnico. | Recoger el **Pendrive USB ISO** del Cajón de Herramientas, insertarlo en el PC (`X:\Sources>`) y reparar el arranque con `bootrec /fixmbr`, `bootrec /fixboot` y `exit`. |
-| **M3** | **UF0853 · Explotación y Scripts** | **Ticket #304**: Desplegar el antivirus corporativo sin mostrar ventanas gráficas que interrumpan al empleado. | Navegar a `C:\Users\Tecnico\Descargas` y ejecutar la instalación desatendida con el modificador silencioso: `antivirus_setup.exe /S`. |
-| **M4** | **UF0853 · Gestión de Procesos** | El sistema sufre *lag* severo y *Thermal Throttling* porque `bucle.exe` consume el **99% de la CPU** y **1.89 GB de RAM**. | Diagnosticar con `tasklist`, `netstat -b` o `powercfg /energy` y terminar forzosamente el proceso con `taskkill /F /IM bucle.exe` (o `/PID 4812`). |
-| **M5** | **MF0220_2 (UF0854) · Redes Locales** | Alerta de **Conflicto de dirección IPv4 duplicada (`192.168.1.50`)** con el servidor `NAS-CONTA-01`. | Diagnosticar con `ipconfig /all` o `nbtstat -A 192.168.1.50`, liberar la concesión actual con `ipconfig /release` (`0.0.0.0`) y solicitar una nueva con `ipconfig /renew` (`192.168.1.105`). |
-| **M6** | **MF0222_2 (UF0860) · Helpdesk** | Usuario de contabilidad alterado tras cerrarse su procesador de textos con un informe de 3 horas sin guardar. | Aplicar **habilidades blandas (*Soft Skills* / empatía)** y guiarle a la ruta de **Autorecuperación (`Archivo > Información` · `.asd`)**. |
-
----
-
-## 💻 Referencia Completa de Comandos del Terminal SMR
-
-El emulador de consola soporta diagnóstico realista de red, procesos, energía, integridad de archivos y navegación por el **Sistema de Archivos Virtual (VFS)**:
-
-| Comando | Descripción Técnica |
+| Comandos | Para qué |
 | :--- | :--- |
-| `ping 192.168.1.1` / `ping 8.8.8.8` | Comprueba el alcance ICMP hacia el Gateway LAN o hacia Google Public DNS (`8.8.8.8` / `dns.google`) devolviendo `[SUCCESS]` o `[ERROR]` y poblando la caché DNS/ARP. |
-| `ipconfig` / `ipconfig /all` | Muestra la configuración IPv4, estado del medio físico OSI Capa 1, servidores DHCP/DNS y un diagrama visual ASCII de la topología de red. |
-| `ipconfig /displaydns` / `/flushdns` | Muestra la tabla dinámica de la caché de resolución DNS poblada tras pings exitosos o la vacía por completo. |
-| `ipconfig /release` / `ipconfig /renew` | Libera la concesión DHCP en conflicto (`0.0.0.0`) y negocia el ciclo **DORA** (*Discover, Offer, Request, Acknowledge*) para obtener `192.168.1.105`. |
-| `netsh interface show interface` | Muestra el **Estado administrativo** (`Habilitado`) frente al **Estado operativo/físico de Capa 1** (`Conectado` / `Desconectado`) de los adaptadores de red. |
-| `arp -a` / `arp -d` | Consulta la tabla de traducción `IPv4 <-> MAC` o purga todas las entradas de la caché ARP forzando una nueva resolución por difusión (*Broadcast*). |
-| `tracert <ip>` | Simula el seguimiento de ruta salto a salto (hasta 5 saltos WAN más allá del gateway `192.168.1.1`) con tiempos de respuesta RTT de 3 sondas por router. |
-| `nbtstat -A <ip>` / `-n` / `-c` / `-R` | Consulta la tabla de nombres **NetBIOS sobre TCP/IP (`UDP 137`)** de un nodo remoto (`<00>` Estación, `<20>` Servidor SMB de compartición de red, `MAC`). |
-| `netstat -b` / `netstat -ano` | Lista las conexiones TCP/UDP activas, sus estados (`LISTENING`, `ESTABLISHED`, `SYN_SENT`), el `PID` y el **nombre del ejecutable entre corchetes** (ej. `[bucle.exe]` en los puertos `4444` y `8080`). |
-| `tasklist` / `taskkill /F /IM bucle.exe` | Lista los procesos en memoria y mata forzosamente el proceso descontrolado `bucle.exe` (`PID 4812`). |
-| `powercfg /energy` / `powercfg /list` | Ejecuta un rastreo simulado de eficiencia energética y genera el resumen de `energy-report.html`, diagnosticando bloqueos de estados ACPI `C-State` y *Thermal Throttling* por alta carga de CPU. |
-| `sfc /scannow` / `sfc /verifyonly` | Inicia una verificación progresiva (`0%` → `100%`) de los 4.812 archivos críticos de `System32` y del almacén `WinSxS`, confirmando que el sistema se encuentra saludable. |
-| `bootrec /fixmbr` / `/fixboot` / `/rebuildbcd` | Herramientas del entorno de recuperación **WinRE (`X:\Sources>`)** para reparar el Master Boot Record, el sector de arranque y el almacén BCD. |
-| `dir [ruta]` / `cd <ruta>` / `type <archivo>` | Explora cualquier carpeta del VFS (con autocompletado de rutas completas al pulsar `[Tab]`), cambia de directorio o muestra el contenido de archivos de texto. |
-| `tree` / `tree /f` / `tree /a` | Visualiza en formato de árbol jerárquico anidado (`├───`, `└───`) todas las carpetas y archivos del Sistema de Archivos Virtual (VFS). |
-| `history` / `history <n>` / `!<n>` / `!!` | Lista el historial persistente numerado con botones **`[Cargar]`** y **`[▶ Ejecutar]`**, filtra por texto o re-ejecuta comandos antiguos directamente por su índice. |
-| `audit` / `eventvwr` | Abre el Panel Flotante de Auditoría del Sistema Virtual o vuelca el registro cronológico de eventos `EVT-*` en la consola. |
-| `ver` / `systeminfo` / `whoami` / `hostname` | Muestra la versión exacta del SO, arquitectura de compilación **`x64-based system` (`AMD64`)**, memoria RAM física disponible y adaptadores. |
-| `shutdown /r` / `shutdown /s` / `exit` | Simula un reinicio completo del sistema virtual (`/r` o `exit` desde WinRE) o muestra la pantalla de apagado ACPI S5 y minimiza el terminal (`/s`). |
-| `theme <matrix\|win95\|contrast\|powershell>` | Cambia en caliente el esquema de color del terminal (también compatible con `color 0a`, `color 07`, `color 0e`, `color 1f`). |
+| `ping`, `ipconfig` (`/all`, `/release`, `/renew`, `/displaydns`, `/flushdns`), `arp -a`/`-d`, `tracert`, `netsh interface show interface` | Diagnóstico de red por capas |
+| `nbtstat -A`/`-n`/`-c`/`-R`, `netstat -ano`/`-b` | Nombres NetBIOS, conexiones y el ejecutable detrás de cada puerto |
+| `tasklist`, `taskkill`, `powercfg /energy`/`/list`, `sfc /scannow` | Procesos, energía e integridad del sistema |
+| `bootrec /fixmbr`/`/fixboot`/`/rebuildbcd`/`/scanos`, `exit` | Reparación del arranque (solo en WinRE) |
+| `dir`, `cd`, `type`, `tree` (`/f`, `/a`), `cls` | Navegar por el sistema de archivos virtual |
+| `ver`, `systeminfo`, `whoami`, `hostname`, `shutdown /r`/`/s` | Información del sistema y reinicio |
+| `audit`, `eventvwr`, `history`, `theme`, `help` | Extras del simulador: panel de auditoría, historial y temas de color |
 
----
+**Atajos:** `Tab` autocompleta comandos y rutas · `Ctrl+R` busca en el historial · `Ctrl+P`/`Ctrl+N` o `↑`/`↓` recorren el historial · `Ctrl+L` limpia · `Ctrl+C` interrumpe · `Ctrl+U`/`Esc` borran la línea.
 
-## ⌨️ Atajos de Teclado de la Consola
+## Cómo se evalúa
 
-| Atajo | Función |
-| :---: | :--- |
-| **`[Tab]`** | Autocompletado inteligente en bucle sensible al contexto y sugerencia automática de **rutas completas de carpetas del VFS** al usar `dir` o `cd`. |
-| **`[Ctrl + R]`** | Abre el buscador interactivo en tiempo real (**`reverse-i-search`**) sobre el historial persistente de comandos (`localStorage`). |
-| **`[Ctrl + P]` / `[Ctrl + N]`** | Navega hacia **atrás (`Ctrl+P`)** o hacia **adelante (`Ctrl+N`)** en el historial de comandos sin necesidad de usar las teclas de flecha. |
-| **`[↑]` / `[↓]`** | Recorre los comandos anteriores y siguientes del historial persistente. |
-| **`[Ctrl + L]`** | Limpia inmediatamente la pantalla del terminal (equivalente a `cls` / `clear`). |
-| **`[Ctrl + C]`** | Interrumpe el comando o escaneo progresivo en curso (`sfc /scannow`) e imprime la señal `^C` (`SIGINT`). |
-| **`[Ctrl + U]` / `[Esc]`** | Borra toda la línea de entrada actual o cierra el buscador `Ctrl+R`. |
+- **Nota sobre 10:** 1,4 puntos por misión (8,4) + 1,6 repartidos entre los 6 tests de teoría.
+- **Tests:** solo cuenta el **primer intento**. Tras responder, la pregunta se cierra y muestra la explicación.
+- **Las misiones solo se superan dentro de su misión.** Teclear desde la M1 los comandos de las demás no da puntos: la consola responde lo que respondería ese equipo.
+- **Insignias:** una por misión (la de M3 exige no hacer saltar el asistente gráfico y la de M6 acertar a la primera), *Erudito Técnico* por acertar los 6 tests y *Expert Debugger* por superar las 6 misiones sin pedir ninguna pista.
+- **Expediente:** el alumno escribe su nombre y lo imprime o lo guarda en PDF desde el propio navegador.
 
----
+## En el aula
 
-## 🛠️ Tecnologías y Arquitectura del Proyecto
+- **Versión offline:** el enlace *Versión offline* de la barra (o [este](https://unfantasmaenelsistema.github.io/CyberAcademySMR/cyberacademy-smr-offline.html)) descarga la app completa en **un único archivo `.html`** con todo incrustado. Funciona con doble clic desde un pendrive, sin Internet, y se puede subir a Moodle como recurso.
+- **Progreso guardado:** recargar o cerrar el navegador no borra la partida (misiones, tests, insignias y nombre).
+- **Equipos compartidos:** *Reiniciar* borra el progreso **y** el historial de comandos, para que el siguiente alumno no herede las soluciones del anterior.
+- **Pantallas:** pensado para escritorio a partir de 1024 px de ancho.
 
-- **Frontend**: React 19 + TypeScript + Tailwind CSS 4.
-- **Visualización en Tiempo Real**: `Recharts` (`LineChart` + `ResponsiveContainer`) integrado en el Panel de Auditoría para monitorizar el uso de CPU antes y después de finalizar `bucle.exe`.
-- **Audio Procedural sin Dependencias Externas**: Motor de síntesis de sonido y bucle ambiental de oficina (*Web Audio API* en `src/utils/soundEffects.ts`) que simula el zumbido de ventiladores de servidores (con aceleración térmica en la Misión 4) y efectos mecánicos de teclado y conectores RJ45.
-- **Exportación Autónoma Offline (`.html`)**: Utilidad integrada (`src/utils/standaloneExporter.ts`) que empaqueta la práctica en un único archivo `.html` autocontenido para subirlo a **Moodle** o ejecutarlo sin conexión en el aula.
+## Desarrollo
+
+Requiere [Bun](https://bun.sh/) (el proyecto se instala con `bun.lock`).
+
+```bash
+git clone https://github.com/unfantasmaenelsistema/CyberAcademySMR.git
+cd CyberAcademySMR
+bun install
+bun run dev        # http://localhost:3000
+```
+
+```bash
+bun run lint       # comprobación de tipos (tsc)
+bun run test       # tests del motor de progreso (bun test)
+bun run build      # dist/ + dist/cyberacademy-smr-offline.html
+```
+
+Cada `push` a `main` compila, pasa los tipos y los tests y publica `dist/` en GitHub Pages (`.github/workflows/deploy.yml`).
+
+## Estructura
 
 ```text
-├── public/
-│   ├── assets/aistudio/
-│   │   ├── Gemini_Generated_Image_k6z8vpk6z8vpk6z8_c474940b.jpg  # Captura real de referencia de la escena
-│   │   └── icono_81a3db5b.png                                    # Logotipo oficial Un Fantasma en el Sistema
-│   └── screenshots/
-│       ├── terminal-avanzado-smr.svg                             # Captura del Terminal CLI, VFS, tree, nbtstat y Ctrl+R
-│       ├── panel-auditoria-recharts-cpu.svg                      # Captura del Panel de Auditoría y gráfica CPU Recharts
-│       └── rack-tia568b-y-logros.svg                             # Captura del Rack 42U, Tester EIA/TIA-568B y Logros
+├── docs/
+│   ├── logo.png
+│   └── capturas/                  # capturas reales de la app (WebP)
+├── scripts/
+│   └── build-offline.mjs          # genera la versión offline de un solo archivo
 ├── src/
+│   ├── App.tsx                    # misiones, escena, diálogos e intérprete de comandos
+│   ├── assets/icono.png           # logo de Un Fantasma en el Sistema (también favicon)
 │   ├── components/
-│   │   ├── AnimeAssets.tsx            # Sprites vectoriales de Alice y retratos dinámicos de la caja de diálogo
-│   │   ├── OfficeSceneSVG.tsx         # Escenario 2D de la Oficina de Soporte, Rack 42U, Cajón y PC del Técnico
-│   │   └── TerminalAuditPanel.tsx     # Panel Flotante de Auditoría + Gráfica Recharts de CPU en tiempo real
-│   ├── data/
-│   │   └── smrCurriculum.ts           # Fichas teóricas SMR, cuestionarios, pines TIA-568B, insignias y VFS
-│   ├── utils/
-│   │   ├── soundEffects.ts            # Sintetizador Web Audio API (ambiente de oficina + SFX interactivos)
-│   │   └── standaloneExporter.ts      # Exportador de archivo único .html autónomo para aulas virtuales
-│   ├── App.tsx                        # Máquina de estados de las 6 misiones, motor moverAlice e intérprete CLI
-│   ├── index.css                      # Estilos globales Tailwind CSS y animaciones del escenario
-│   └── main.tsx                       # Punto de entrada de React
+│   │   ├── AnimeAssets.tsx        # Alice y los retratos del diálogo (SVG)
+│   │   ├── OfficeSceneSVG.tsx     # la oficina, el rack, el cajón y el PC
+│   │   └── TerminalAuditPanel.tsx # panel de auditoría y gráfica de CPU (Recharts)
+│   ├── data/smrCurriculum.ts      # teoría, tests, insignias, pines TIA-568B y sistema de archivos virtual
+│   ├── engine/
+│   │   ├── progress.ts            # guardado y validación del progreso, nota
+│   │   └── progress.test.ts
+│   └── utils/soundEffects.ts      # audio procedural (Web Audio API)
 ├── index.html
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── LICENSE
+└── vite.config.ts
 ```
 
----
+## Novedades de la v2
 
-## 🚀 Instalación y Ejecución Local
+**Corrección de la evaluación**
+- Los comandos de solución ya no superan misiones ajenas: desde la M1 se podían aprobar la M3, la M4 y la M5 (y sus insignias) tecleando sus comandos.
+- El progreso se guarda y sobrevive a una recarga; *Reiniciar* borra también el historial de comandos.
+- Los tests cuentan solo el primer intento (antes, tras fallar, la explicación daba la respuesta y se podía volver a pulsar).
+- El diálogo inicial, el objetivo, los avisos de Windows, el ticket, la «guía rápida» del escritorio y las sugerencias de `Tab` ya no dictan el comando de la solución; queda para *Pedir pista*.
+- M6: las respuestas ya no llevan la etiqueta «Empática y Correcta» en verde; son cuatro (una técnicamente correcta pero fría) y salen en orden aleatorio.
 
-### 1. Clonar el repositorio
+**Rigor técnico**
+- Con el cable suelto, `ipconfig` muestra *medios desconectados* (antes, una IP APIPA 169.254.x.x, que significa otra cosa) y `ping` devuelve *Error general*, no *Tiempo de espera agotado*.
+- M3: el instalador es NSIS y su `/S` distingue mayúsculas; `/s` abre el asistente. Hay que estar en `Descargas` o dar la ruta.
+- M4: `taskkill` sin `/F` no cierra un proceso colgado; se aceptan los modificadores en cualquier orden.
+- M5: el ámbito DHCP (`.50–.200`) ahora contiene la IP en conflicto, que es lo que explica el problema; la teoría añade la solución definitiva (exclusión o reserva).
+- `bootrec` solo existe en WinRE; la teoría añade el caso UEFI/GPT (`bcdboot`) y el «Acceso denegado» de `/fixboot`.
+- Códigos de módulo y UF corregidos para el IFCT0209 (p. ej., el helpdesk estaba en UF0860, que es imágenes y gráficos) y Autorrecuperación de Word separada de la de LibreOffice.
+- Consola en español con una versión real de Windows 10.
 
-```bash
-git clone https://github.com/tu-usuario/cyberacademy-smr-oficina-soporte.git
-cd cyberacademy-smr-oficina-soporte
-```
+**Interfaz y publicación**
+- El terminal tapaba el anillo del Rack (justo el que pide la M1); ahora se coloca por debajo y no pisa el cajón ni la caja de diálogo.
+- «Exportar HTML» generaba un mini‑juego distinto (sin M6, con el logo roto y que listaba todas las soluciones ante cualquier comando). Ahora es la app completa en un archivo.
+- Fuera: dependencias sin uso (`@google/genai`, `express`, `dotenv`, `motion`…), la carpeta `.aistudio` y las «capturas» SVG dibujadas, sustituidas por capturas reales.
+- Publicación en GitHub Pages con Bun, tipos y tests en cada `push`.
 
-### 2. Instalar dependencias
+## Créditos y licencia
 
-```bash
-npm install
-```
+Creado por **[Un Fantasma en el Sistema](https://www.unfantasmaenelsistema.com)** para la formación práctica en sistemas microinformáticos.
 
-### 3. Iniciar el servidor de desarrollo
-
-```bash
-npm run dev
-```
-
-La aplicación estará disponible en `http://localhost:3000`.
-
-### 4. Compilar para producción y verificar tipos
-
-```bash
-npm run lint
-npm run build
-```
-
----
-
-## 🌐 Créditos y Autoría
-
-Desarrollado para la formación práctica de estudiantes de **Sistemas Microinformáticos y Redes (SMR)** por:
-
-- **Proyecto Educativo**: [Un Fantasma en el Sistema](https://www.unfantasmaenelsistema.com/)
-- **Licencia**: [MIT](LICENSE)
+Publicado bajo [licencia MIT](LICENSE).

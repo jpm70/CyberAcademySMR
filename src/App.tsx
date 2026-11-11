@@ -45,7 +45,8 @@ import {
   AuditSeverity,
 } from './components/TerminalAuditPanel';
 import { soundFX } from './utils/soundEffects';
-import { downloadStandaloneHTML } from './utils/standaloneExporter';
+import { loadProgress, saveProgress, clearProgress, calculateGrade as computeGrade } from './engine/progress';
+import iconoUrl from './assets/icono.png';
 import {
   SMR_THEORY_SHEETS,
   TIA_568B_PINS,
@@ -244,10 +245,10 @@ const MISSIONS: MissionInfo[] = [
     headerTitle: 'Restaurar la red local',
     location: 'Oficina de Soporte',
     objective:
-      'Haz clic en el Rack de Comunicaciones para conectar el cable suelto y ejecuta ping 192.168.1.1 en el terminal.',
+      'Recupera la conectividad con la puerta de enlace 192.168.1.1: diagnostica desde la consola y revisa el medio físico.',
     hint: 'Haz clic primero en el círculo de "Rack de Comunicaciones" para conectar el cable RJ45 suelto (cable_conectado = true). Después escribe en el terminal: ping 192.168.1.1 (también puedes probar ping 127.0.0.1 para verificar el loopback).',
     initialDialog:
-      'El router no responde al ping y el indicador WAN está apagado... ¡Tengo que comprobar la conexión física o la configuración IP desde el terminal!',
+      'Este equipo se ha quedado sin red y el LED de enlace de su tarjeta está apagado... ¿Fallo físico o de configuración IP? ¡Vamos a diagnosticarlo desde el terminal!',
   },
   {
     id: 2,
@@ -255,21 +256,21 @@ const MISSIONS: MissionInfo[] = [
     headerTitle: 'El Arranque del Sistema Operativo',
     location: 'Oficina de Soporte',
     objective:
-      'Recoge el Pendrive USB con la ISO en el Cajón de Herramientas, insértalo en el PC y ejecuta bootrec /fixmbr y bootrec /fixboot.',
+      'Arranca el PC desde un medio de recuperación y repara el código de arranque del disco desde la consola de WinRE.',
     hint: 'Haz clic en el "Cajón / Herramientas" para coger el Pendrive con la ISO. Luego haz clic en "PC del Técnico" y escribe en el terminal: bootrec /fixmbr y después bootrec /fixboot',
     initialDialog:
       '¡El equipo muestra el error crítico "BOOTMGR is missing" y no inicia! Necesito buscar el pendrive con la ISO de rescate en el Cajón de Herramientas e insertarlo en el PC.',
   },
   {
     id: 3,
-    shortLabel: 'M3: Despliegue /S',
+    shortLabel: 'M3: Despliegue',
     headerTitle: 'Despliegue Silencioso de Antivirus',
     location: 'Oficina de Soporte',
     objective:
-      'Lee el ticket de soporte, ve a la carpeta Descargas y ejecuta antivirus_setup.exe /S sin interrumpir al usuario.',
+      'Lee el ticket, localiza el instalador e instálalo de forma desatendida, sin que aparezca ninguna ventana delante del empleado.',
     hint: 'En el terminal escribe "cd Descargas" (usa Tab para autocompletar rutas según el directorio actual) y ejecuta: antivirus_setup.exe /S. Si olvidas el /S, saltará la ventana gráfica.',
     initialDialog:
-      'Acaba de entrar el Ticket #304: debemos instalar el antivirus corporativo en el equipo del nuevo empleado desde Descargas usando el parámetro silencioso /S para no interrumpir su trabajo.',
+      'Acaba de entrar el Ticket #304: hay que instalar el antivirus corporativo en el equipo del nuevo empleado sin interrumpir su trabajo. El instalador ya está descargado en el equipo.',
   },
   {
     id: 4,
@@ -277,10 +278,10 @@ const MISSIONS: MissionInfo[] = [
     headerTitle: 'El Proceso Rebelde (CPU 99%)',
     location: 'Oficina de Soporte',
     objective:
-      'Identifica el proceso que bloquea la CPU con tasklist y detenlo forzosamente con taskkill /F /IM bucle.exe.',
+      'Identifica desde la consola qué proceso satura la CPU y termínalo.',
     hint: 'Escribe "tasklist" en el terminal de comandos para ver el consumo de memoria de bucle.exe (PID 4812) y ciérralo con: taskkill /F /IM bucle.exe',
     initialDialog:
-      '¡La pantalla tiembla y el sistema sufre un lag terrible porque un programa bloqueado consume el 99% de los recursos! Usaré tasklist y taskkill /F /IM bucle.exe en el terminal.',
+      '¡La pantalla tiembla y el sistema sufre un lag terrible! Algún programa colgado se está comiendo el 99% de la CPU. Hay que averiguar cuál desde la consola.',
   },
   {
     id: 5,
@@ -288,10 +289,10 @@ const MISSIONS: MissionInfo[] = [
     headerTitle: 'Conflicto de Identidad (MF0220_2)',
     location: 'Oficina de Soporte',
     objective:
-      'Resuelve el conflicto de IP duplicada ejecutando ipconfig /release (0.0.0.0) seguido de ipconfig /renew (192.168.1.105).',
+      'Averigua con quién choca nuestra IP y consigue una concesión DHCP nueva y libre de conflictos.',
     hint: 'En el terminal de comandos escribe primero "ipconfig /release" para liberar la IP actual y luego "ipconfig /renew" para solicitar una nueva concesión DHCP.',
     initialDialog:
-      '¡Windows acaba de mostrar una alerta de "Conflicto de dirección IP" en la red! Tengo que liberar la concesión actual con ipconfig /release y pedir una nueva con ipconfig /renew.',
+      '¡Windows acaba de mostrar una alerta de "Conflicto de dirección IP" en la red! Otro equipo está usando nuestra dirección. Hay que diagnosticarlo y resolverlo desde la consola.',
   },
   {
     id: 6,
@@ -299,12 +300,31 @@ const MISSIONS: MissionInfo[] = [
     headerTitle: 'El Asistente Empático (MF0222_2)',
     location: 'Oficina de Soporte · Helpdesk',
     objective:
-      'Atiende al usuario alterado de contabilidad aplicando habilidades blandas (empatía) y guíale a la ruta de Autorecuperación.',
-    hint: 'Elige la respuesta empática: "Tranquilo, vamos a abrir la ruta de Autorecuperación en Archivo > Información, el sistema suele guardar copias de seguridad automáticas".',
+      'Atiende al usuario alterado de contabilidad aplicando habilidades blandas (empatía) y guíale a la ruta de Autorrecuperación.',
+    hint: 'Busca la respuesta que hace las dos cosas a la vez: calmar al usuario sin culparle y acompañarle a recuperar la copia automática (.asd) de Word desde Archivo > Información > Administrar documento.',
     initialDialog:
       '¡El procesador de textos se ha cerrado y he perdido el informe que llevo haciendo 3 horas! ¡Arréglalo ya!',
   },
 ];
+
+type HelpdeskChoice = 'aggressive' | 'passive' | 'cold' | 'empathetic';
+
+const HELPDESK_OPTIONS: Record<HelpdeskChoice, string> = {
+  aggressive: '"El fallo es de la memoria RAM, que es volátil. Es culpa tuya por no guardar cada cinco minutos."',
+  passive: '"Cuando se cierra así no se puede hacer nada, lo siento. Tendrás que repetir el informe desde cero."',
+  cold: '"Las copias .asd están en %AppData%\\Microsoft\\Word. Búscalo tú ahí y ábrelo, que tengo más tickets."',
+  empathetic:
+    '"Tranquilo, entiendo el disgusto. Word guarda copias automáticas cada pocos minutos: vamos a abrirlo juntos y buscarlo en Archivo > Información > Administrar documento."',
+};
+
+const shuffleHelpdeskOptions = (): HelpdeskChoice[] => {
+  const order: HelpdeskChoice[] = ['aggressive', 'passive', 'cold', 'empathetic'];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return order;
+};
 
 interface TerminalLine {
   id: string;
@@ -407,45 +427,53 @@ const FiligreeCorner: React.FC<{ className?: string }> = ({ className = '' }) =>
 
 export default function App() {
   // Máquina de estados global de las 6 misiones
-  const [currentMission, setCurrentMission] = useState<number>(1);
-  const [completedMissions, setCompletedMissions] = useState<number[]>([]);
-  const [completedQuizzes, setCompletedQuizzes] = useState<number[]>([]);
+  // Progreso guardado en localStorage (recargar la página no borra la partida)
+  const [initialProgress] = useState(loadProgress);
+  const [currentMission, setCurrentMission] = useState<number>(initialProgress.currentMission);
+  const [completedMissions, setCompletedMissions] = useState<number[]>(initialProgress.completedMissions);
+  const [completedQuizzes, setCompletedQuizzes] = useState<number[]>(initialProgress.completedQuizzes);
+  const [failedQuizzes, setFailedQuizzes] = useState<number[]>(initialProgress.failedQuizzes);
   const [quizSelectedAnswer, setQuizSelectedAnswer] = useState<number | null>(null);
 
   // Estados de Logros (Achievements) y seguimiento de pistas/errores
-  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
+  const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>(initialProgress.unlockedAchievements);
   const [recentAchievementToast, setRecentAchievementToast] = useState<AchievementDef | null>(null);
-  const [hintsUsedCount, setHintsUsedCount] = useState<number>(0);
-  const [hadGuiErrorInM3, setHadGuiErrorInM3] = useState<boolean>(false);
-  const [hadHelpdeskMistakeInM6, setHadHelpdeskMistakeInM6] = useState<boolean>(false);
+  const [hintsUsedCount, setHintsUsedCount] = useState<number>(initialProgress.hintsUsedCount);
+  const [hadGuiErrorInM3, setHadGuiErrorInM3] = useState<boolean>(initialProgress.hadGuiErrorInM3);
+  const [hadHelpdeskMistakeInM6, setHadHelpdeskMistakeInM6] = useState<boolean>(initialProgress.hadHelpdeskMistakeInM6);
 
   // Estados específicos de las misiones y directorio actual del VFS
-  const [cableConectado, setCableConectado] = useState<boolean>(false);
+  const [cableConectado, setCableConectado] = useState<boolean>(initialProgress.cableConectado);
+  // El latiguillo suelto es la avería de la Misión 1: en el resto de misiones el enlace está levantado.
+  const linkUp = cableConectado || currentMission !== 1;
   const [testingCablePin, setTestingCablePin] = useState<number>(0);
-  const [usbRecogido, setUsbRecogido] = useState<boolean>(false);
-  const [usbInsertado, setUsbInsertado] = useState<boolean>(false);
-  const [biosUsbPriority, setBiosUsbPriority] = useState<boolean>(false);
-  const [mbrFixed, setMbrFixed] = useState<boolean>(false);
-  const [bootFixed, setBootFixed] = useState<boolean>(false);
-  const [winReExited, setWinReExited] = useState<boolean>(false);
+  const [usbRecogido, setUsbRecogido] = useState<boolean>(initialProgress.usbRecogido);
+  const [usbInsertado, setUsbInsertado] = useState<boolean>(initialProgress.usbInsertado);
+  const [biosUsbPriority, setBiosUsbPriority] = useState<boolean>(initialProgress.biosUsbPriority);
+  const [mbrFixed, setMbrFixed] = useState<boolean>(initialProgress.mbrFixed);
+  const [bootFixed, setBootFixed] = useState<boolean>(initialProgress.bootFixed);
+  const [winReExited, setWinReExited] = useState<boolean>(initialProgress.winReExited);
   const [isSimulatingReboot, setIsSimulatingReboot] = useState<boolean>(false);
   const [rebootOverlayLabel, setRebootOverlayLabel] = useState<string>(
     '[SIMULANDO REINICIO DEL SISTEMA DESDE WINRE (X:\\Sources)] Ejecutando secuencia BIOS/UEFI POST...'
   );
   const [showShutdownScreen, setShowShutdownScreen] = useState<boolean>(false);
   const [currentDir, setCurrentDir] = useState<VirtualDirPath>('C:\\Users\\Tecnico');
-  const [antivirusInstalado, setAntivirusInstalado] = useState<boolean>(false);
+  const [antivirusInstalado, setAntivirusInstalado] = useState<boolean>(initialProgress.antivirusInstalado);
   const [guiWarningTriggered, setGuiWarningTriggered] = useState<boolean>(false);
-  const [procesoTerminado, setProcesoTerminado] = useState<boolean>(false);
-  const [ipLiberada, setIpLiberada] = useState<boolean>(false);
-  const [ipRenovada, setIpRenovada] = useState<boolean>(false);
+  const [procesoTerminado, setProcesoTerminado] = useState<boolean>(initialProgress.procesoTerminado);
+  // bucle.exe es la avería de la Misión 4: solo existe mientras esa misión está sin resolver.
+  const bucleActivo = currentMission === 4 && !procesoTerminado;
+  const [ipLiberada, setIpLiberada] = useState<boolean>(initialProgress.ipLiberada);
+  const [ipRenovada, setIpRenovada] = useState<boolean>(initialProgress.ipRenovada);
   const [dnsCacheEntries, setDnsCacheEntries] = useState<DnsCacheEntry[]>(() =>
     createInitialDnsCache()
   );
   const [arpCacheEntries, setArpCacheEntries] = useState<ArpCacheEntry[]>(() =>
     createInitialArpCache()
   );
-  const [helpdeskResuelto, setHelpdeskResuelto] = useState<boolean>(false);
+  const [helpdeskResuelto, setHelpdeskResuelto] = useState<boolean>(initialProgress.helpdeskResuelto);
+  const [helpdeskOptionOrder] = useState<HelpdeskChoice[]>(shuffleHelpdeskOptions);
 
   const populateDefaultArpResolution = useCallback(() => {
     setArpCacheEntries((prev) => (prev.length > 0 ? prev : createInitialArpCache()));
@@ -469,7 +497,7 @@ export default function App() {
   }, []);
 
   // Datos del alumno para el certificado imprimible
-  const [studentName, setStudentName] = useState<string>('');
+  const [studentName, setStudentName] = useState<string>(initialProgress.studentName);
 
   // Motor de Movimiento CSS Nativo de Alice
   const [alicePos, setAlicePos] = useState<{ x: number; y: number; lookLeft: boolean }>({
@@ -589,12 +617,12 @@ export default function App() {
     {
       id: 'init-1',
       type: 'output',
-      text: 'Microsoft Windows [Version 10.0.15382.330]',
+      text: 'Microsoft Windows [Versión 10.0.19045.5131]',
     },
     {
       id: 'init-2',
       type: 'output',
-      text: '(c) Microsoft Corporation. All rights reserved.',
+      text: '(c) Microsoft Corporation. Todos los derechos reservados.',
     },
     {
       id: 'init-3',
@@ -970,7 +998,7 @@ export default function App() {
 
       // Si estamos en C:\Users\Tecnico en la Misión 3, sugerir también la ruta relativa a Descargas\antivirus_setup.exe /S
       if (dirPath === 'C:\\Users\\Tecnico') {
-        contextualPool.push('Descargas\\antivirus_setup.exe /S');
+        contextualPool.push('Descargas\\antivirus_setup.exe /?');
       }
       if (dirPath === 'X:\\Sources') {
         contextualPool.push('exit');
@@ -987,11 +1015,9 @@ export default function App() {
         'bootrec /fixmbr',
         'bootrec /fixboot',
         'bootrec /rebuildbcd',
-        'antivirus_setup.exe /S',
         'antivirus_setup.exe /?',
         'tasklist',
-        'taskkill /F /IM bucle.exe',
-        'taskkill /F /PID 4812',
+        'taskkill /?',
         'ipconfig /all',
         'ipconfig /displaydns',
         'ipconfig /release',
@@ -1203,6 +1229,55 @@ export default function App() {
     });
   }, []);
 
+  // Guardar el progreso cada vez que cambia
+  useEffect(() => {
+    saveProgress({
+      currentMission,
+      completedMissions,
+      completedQuizzes,
+      failedQuizzes,
+      unlockedAchievements,
+      hintsUsedCount,
+      hadGuiErrorInM3,
+      hadHelpdeskMistakeInM6,
+      cableConectado,
+      usbRecogido,
+      usbInsertado,
+      biosUsbPriority,
+      mbrFixed,
+      bootFixed,
+      winReExited,
+      antivirusInstalado,
+      procesoTerminado,
+      ipLiberada,
+      ipRenovada,
+      helpdeskResuelto,
+      studentName,
+    });
+  }, [
+    currentMission,
+    completedMissions,
+    completedQuizzes,
+    failedQuizzes,
+    unlockedAchievements,
+    hintsUsedCount,
+    hadGuiErrorInM3,
+    hadHelpdeskMistakeInM6,
+    cableConectado,
+    usbRecogido,
+    usbInsertado,
+    biosUsbPriority,
+    mbrFixed,
+    bootFixed,
+    winReExited,
+    antivirusInstalado,
+    procesoTerminado,
+    ipLiberada,
+    ipRenovada,
+    helpdeskResuelto,
+    studentName,
+  ]);
+
   // Comprobar condiciones globales de logros ("Expert Debugger" y "Erudito Técnico SMR")
   useEffect(() => {
     if (completedMissions.length === 6 && hintsUsedCount === 0) {
@@ -1317,14 +1392,15 @@ export default function App() {
     setDialogText(`[PISTA TÉCNICA] ${activeMissionData.hint}`);
   };
 
-  const calculateGrade = (): string => {
-    const missionPoints = completedMissions.length * 1.4;
-    const quizPoints = completedQuizzes.length * (1.6 / 6);
-    return Math.min(10, missionPoints + quizPoints).toFixed(1);
-  };
+  const calculateGrade = (): string => computeGrade(completedMissions, completedQuizzes);
 
   const selectMission = (missionId: number) => {
     soundFX.playClick();
+    applyMissionIntro(missionId);
+  };
+
+  // Coloca la escena, el diálogo y el terminal al entrar en una misión
+  const applyMissionIntro = (missionId: number) => {
     setCurrentMission(missionId);
     setActiveSubView('none');
     setQuizSelectedAnswer(null);
@@ -1347,10 +1423,26 @@ export default function App() {
     }
   };
 
+  // Si se recarga a mitad de partida, retomar la misión guardada con su escena
+  useEffect(() => {
+    if (initialProgress.currentMission !== 1) applyMissionIntro(initialProgress.currentMission);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const resetAllProgress = () => {
     soundFX.playClick();
+    clearProgress();
+    setCmdHistory([]);
+    setHistoryIdx(-1);
+    try {
+      window.localStorage.removeItem(CMD_HISTORY_STORAGE_KEY);
+    } catch {
+      // Ignorar
+    }
+    setStudentName('');
     setCompletedMissions([]);
     setCompletedQuizzes([]);
+    setFailedQuizzes([]);
     setUnlockedAchievements([]);
     setRecentAchievementToast(null);
     setHintsUsedCount(0);
@@ -1388,12 +1480,12 @@ export default function App() {
       {
         id: String(Date.now()),
         type: 'output',
-        text: 'Microsoft Windows [Version 10.0.15382.330]',
+        text: 'Microsoft Windows [Versión 10.0.19045.5131]',
       },
       {
         id: String(Date.now() + 1),
         type: 'output',
-        text: '(c) Microsoft Corporation. All rights reserved.',
+        text: '(c) Microsoft Corporation. Todos los derechos reservados.',
       },
     ]);
   };
@@ -1447,7 +1539,7 @@ export default function App() {
           );
           setAliceExpression('happy');
           setDialogText(
-            '¡He insertado el Pendrive USB con la ISO de rescate y configurado el arranque USB en BIOS! Ahora escribe en el terminal: bootrec /fixmbr y luego bootrec /fixboot'
+            '¡He insertado el Pendrive USB con la ISO de rescate y configurado el arranque USB en BIOS! Ya estamos en la consola de WinRE (X:\\Sources): toca reparar el arranque del disco con la herramienta de recuperación.'
           );
         } else if (!usbRecogido) {
           setAliceExpression('worried');
@@ -1458,7 +1550,7 @@ export default function App() {
       } else if (currentMission === 3 && !antivirusInstalado) {
         setActiveSubView('ticket');
         setDialogText(
-          'He abierto el Ticket de Soporte #304. Recuerda ejecutar antivirus_setup.exe /S en el terminal para realizar una instalación silenciosa.'
+          'He abierto el Ticket de Soporte #304. El instalador admite parámetros de línea de comandos: averigua cuál lo hace silencioso antes de lanzarlo.'
         );
       } else {
         setAliceExpression('normal');
@@ -1480,7 +1572,7 @@ export default function App() {
 
     moverAlice(targetX, 0, lookLeft, () => {
       setActiveSubView('rack');
-      if (!cableConectado) {
+      if (!linkUp) {
         setAliceExpression('worried');
         setDialogText(
           '¡Lo encontré! En el armario del Rack de Comunicaciones hay un cable de red RJ45 amarillo suelto. Puedes verificar los 8 hilos EIA/TIA-568B y hacer clic para conectarlo.'
@@ -1519,7 +1611,7 @@ export default function App() {
   };
 
   const handleConnectCable = () => {
-    if (cableConectado) return;
+    if (linkUp) return;
     soundFX.playCableSnap();
     setCableConectado(true);
     recordAuditEvent(
@@ -1532,7 +1624,7 @@ export default function App() {
     setSpeaker('alice');
     setAliceExpression('happy');
     setDialogText(
-      '¡Cable RJ45 conectado al Switch del Rack (cable_conectado = true)! Ahora ve al Terminal de comandos y escribe: ping 192.168.1.1'
+      '¡Cable RJ45 conectado al Switch del Rack (cable_conectado = true)! Ahora vuelve a la consola y comprueba que llegamos a la puerta de enlace.'
     );
   };
 
@@ -1781,13 +1873,13 @@ export default function App() {
         { type: 'output', text: '  dir | cd <carpeta> | type  Explora directorios y lee archivos del VFS' },
         { type: 'output', text: '  tree | tree /f             Visualiza el árbol jerárquico de carpetas y archivos del VFS' },
         { type: 'output', text: '  ping 192.168.1.1 | 8.8.8.8 Verifica conectividad con el router LAN o Google DNS (8.8.8.8)' },
-        { type: 'output', text: '  bootrec /fixmbr | /fixboot Repara el arranque MBR y partición desde X:\\Sources (Misión 2)' },
-        { type: 'output', text: '  antivirus_setup.exe /S     Instalación desatendida silenciosa (Misión 3)' },
-        { type: 'output', text: '  tasklist | taskkill /F /IM Lista procesos y termina bucle.exe (Misión 4)' },
+        { type: 'output', text: '  bootrec /?                 Herramienta de reparación del arranque (solo en WinRE, X:\\Sources)' },
+        { type: 'output', text: '  <instalador>.exe /?        Muestra los modificadores que admite un instalador' },
+        { type: 'output', text: '  tasklist | taskkill        Lista los procesos / termina uno (taskkill /? para la sintaxis)' },
         { type: 'output', text: '  netstat -b | netstat -ano  Lista conexiones activas y el ejecutable que abrió cada puerto' },
         { type: 'output', text: '  powercfg /energy           Genera informe de eficiencia energética y diagnostica lag de CPU' },
         { type: 'output', text: '  sfc /scannow               Verifica la integridad de archivos del sistema Windows (WinSxS)' },
-        { type: 'output', text: '  ipconfig /all | /displaydns | /release | /renew  Diagnóstico DHCP y caché DNS (Misión 5)' },
+        { type: 'output', text: '  ipconfig /all | /displaydns | /release | /renew  Configuración IP, caché DNS y concesión DHCP' },
         { type: 'output', text: '  arp -a | arp -d            Muestra o purga la tabla de caché ARP (IP <-> MAC)' },
         { type: 'output', text: '  tracert <ip>               Traza los saltos de enrutamiento hacia una IP (ej. 8.8.8.8)' },
         { type: 'output', text: '  nbtstat -A <ip>            Muestra la tabla de nombres NetBIOS remotos y compartición SMB' },
@@ -1859,7 +1951,7 @@ export default function App() {
               }
             : {
                 type: 'success',
-                text: 'Microsoft Windows [Version 10.0.15382.330] — Reinicio completo del sistema virtual finalizado en C:\\Users\\Tecnico.',
+                text: 'Microsoft Windows [Versión 10.0.19045.5131] — Reinicio completo del sistema virtual finalizado en C:\\Users\\Tecnico.',
               },
         ]);
 
@@ -2449,7 +2541,7 @@ export default function App() {
       appendLines([
         { type: 'system', text: 'Ejecutando script por lotes: diagnostico_red.bat...' },
         { type: 'success', text: 'Loopback 127.0.0.1: OK (<1ms)' },
-        cableConectado
+        linkUp
           ? { type: 'success', text: 'Gateway 192.168.1.1: OK (1ms TTL=64)' }
           : { type: 'error', text: 'Gateway 192.168.1.1: FALLO DE ENLACE FÍSICO' },
       ]);
@@ -2469,7 +2561,7 @@ export default function App() {
       appendLines([
         {
           type: 'output',
-          text: 'Microsoft Windows [Version 10.0.15382.330] (x64-based system)',
+          text: 'Microsoft Windows [Versión 10.0.19045.5131] (x64-based system)',
         },
         {
           type: 'system',
@@ -2567,7 +2659,7 @@ export default function App() {
       }
 
       if (cmdLower === 'arp -a' || cmdLower === 'arp -g') {
-        if (!cableConectado && currentMission === 1) {
+        if (!linkUp && currentMission === 1) {
           appendLines([
             {
               type: 'warning',
@@ -2659,7 +2751,7 @@ export default function App() {
       }
 
       // 2. Si el cable físico RJ45 del Rack está desconectado
-      if (!cableConectado) {
+      if (!linkUp) {
         soundFX.playError();
         recordAuditEvent(
           'EVT-1050',
@@ -2721,13 +2813,13 @@ export default function App() {
           },
           {
             type: 'system',
-            text: '[Diagnóstico SMR] El Gateway 192.168.1.1 rechaza enrutar paquetes hacia el exterior mientras tu IP esté en conflicto o en 0.0.0.0. Ejecuta "ipconfig /release" y "ipconfig /renew".',
+            text: '[Diagnóstico SMR] El Gateway 192.168.1.1 rechaza enrutar paquetes hacia el exterior mientras tu IP esté en conflicto o en 0.0.0.0. Hay que conseguir una concesión DHCP nueva.',
           },
         ]);
         setSpeaker('alice');
         setAliceExpression('worried');
         setDialogText(
-          `¡Mira el resultado de "tracert ${targetIp}"! Llegamos al Salto 1 (192.168.1.1), pero el router bloquea el salto hacia el exterior por el conflicto de IP. Resuélvelo con ipconfig /release e ipconfig /renew.`
+          `¡Mira el resultado de "tracert ${targetIp}"! Llegamos al Salto 1 (192.168.1.1), pero el router bloquea el salto hacia el exterior por el conflicto de IP. Hay que soltar esta concesión y pedir otra al DHCP.`
         );
         return;
       }
@@ -2905,11 +2997,11 @@ export default function App() {
       }
 
       // Verificar si el enlace físico RJ45 está desconectado
-      if (currentMission === 1 && !cableConectado) {
+      if (currentMission === 1 && !linkUp) {
         soundFX.playError();
         appendLines([
           { type: 'output', text: 'Ethernet0:' },
-          { type: 'output', text: 'Dirección IP del nodo: [169.254.42.18] Id. de ámbito: []' },
+          { type: 'output', text: 'Dirección IP del nodo: [0.0.0.0] Id. de ámbito: []' },
           { type: 'error', text: '    Host no encontrado.' },
           {
             type: 'warning',
@@ -3040,7 +3132,7 @@ export default function App() {
           sharesSummary: '\\\\NAS-CONTA-01\\Contabilidad_Informes, \\\\NAS-CONTA-01\\Backups_ASD',
           diagnosticNote:
             currentMission === 5 && !ipRenovada
-              ? '¡CONFLICTO DETECTADO! La IP 192.168.1.50 pertenece al servidor de archivos NAS-CONTA-01 (sufijo <20> activo). Por eso nuestro PC tiene conflicto de IP duplicada. Ejecuta "ipconfig /release" y "ipconfig /renew".'
+              ? '¡CONFLICTO DETECTADO! La IP 192.168.1.50 pertenece al servidor de archivos NAS-CONTA-01 (sufijo <20> activo). Alguien le puso a mano una IP fija que está DENTRO del ámbito DHCP, y el servidor nos la concedió también a nosotros. Toca soltar esta concesión y pedir otra.'
               : 'Servidor NAS de Contabilidad con servicio de compartición SMB (<20>) activo y accesible en la red.',
         },
         '192.168.1.1': {
@@ -3206,7 +3298,7 @@ export default function App() {
         netshArgs === 'interface ipv4 show interfaces' ||
         netshArgs === 'interface ip show config'
       ) {
-        const isPhysicallyUnplugged = currentMission === 1 && !cableConectado;
+        const isPhysicallyUnplugged = currentMission === 1 && !linkUp;
 
         appendLines([
           { type: 'output', text: '' },
@@ -3322,9 +3414,9 @@ export default function App() {
         recordAuditEvent(
           'EVT-4008',
           'PROCESOS',
-          !procesoTerminado ? 'WARNING' : 'INFO',
+          bucleActivo ? 'WARNING' : 'INFO',
           'Auditoría de sockets y ejecutables asociados (netstat -b)',
-          !procesoTerminado
+          bucleActivo
             ? 'Detectado ejecutable rebelde [bucle.exe] (PID 4812) saturando los puertos TCP 8080 (SYN_SENT) y 4444 (LISTENING).'
             : 'Inspección de ejecutables por puerto completada sin procesos anómalos.'
         );
@@ -3373,7 +3465,7 @@ export default function App() {
           );
         }
 
-        if (!procesoTerminado) {
+        if (bucleActivo) {
           binaryLines.push(
             {
               type: 'error',
@@ -3393,14 +3485,14 @@ export default function App() {
             },
             {
               type: 'warning',
-              text: '[Diagnóstico SMR] El ejecutable [bucle.exe] (PID 4812) mantiene abiertos los puertos TCP 4444 y 8080. Detenlo con: taskkill /F /IM bucle.exe',
+              text: '[Diagnóstico SMR] El ejecutable [bucle.exe] (PID 4812) mantiene abiertos los puertos TCP 4444 y 8080. Hay que terminarlo desde la consola.',
             }
           );
 
           setSpeaker('alice');
           setAliceExpression('worried');
           setDialogText(
-            '¡Bien visto con "netstat -b"! El parámetro -b revela el nombre exacto del ejecutable debajo de cada conexión: [bucle.exe] (PID 4812) está saturando los puertos 4444 y 8080. Ciérralo con: taskkill /F /IM bucle.exe'
+            '¡Bien visto con "netstat -b"! El parámetro -b revela el nombre exacto del ejecutable debajo de cada conexión: [bucle.exe] (PID 4812) está saturando los puertos 4444 y 8080. Toca terminarlo desde la consola, y a la fuerza: está colgado.'
           );
         } else {
           binaryLines.push(
@@ -3437,7 +3529,7 @@ export default function App() {
         { type: 'output', text: '  Proto  Dirección local         Dirección remota       Estado          PID' },
         { type: 'output', text: '  TCP    0.0.0.0:135             0.0.0.0:0              LISTENING       912' },
         { type: 'output', text: '  TCP    192.168.1.105:49672     192.168.1.1:443        ESTABLISHED     2140' },
-        !procesoTerminado
+        bucleActivo
           ? {
               type: 'error',
               text: '  TCP    127.0.0.1:8080          127.0.0.1:8080         SYN_SENT        4812 (Usa "netstat -b" para ver el .exe)',
@@ -3609,7 +3701,7 @@ export default function App() {
       appendLines([
         {
           type: 'system',
-          text: 'Comprobador de recursos de Microsoft (R) Windows (SFC) Versión 10.0.15382.330:',
+          text: 'Comprobador de recursos de Microsoft (R) Windows (SFC) Versión 10.0.19045.5131:',
         },
         {
           type: 'output',
@@ -3630,7 +3722,7 @@ export default function App() {
       if (powerArg === '/energy' || powerArg === '-energy') {
         const reportPath = `${currentDir}\\energy-report.html`;
 
-        if (!procesoTerminado) {
+        if (bucleActivo) {
           appendLines([
             { type: 'output', text: 'Habilitando seguimiento durante 60 segundos...' },
             { type: 'output', text: 'Observando el comportamiento del sistema y estados ACPI P-State / C-State...' },
@@ -3701,7 +3793,7 @@ export default function App() {
             },
             {
               type: 'warning',
-              text: '💡 DIAGNÓSTICO SMR: El lag del sistema se debe al estrangulamiento térmico provocado por "bucle.exe" (PID 4812) al 99% de CPU. Finalízalo con "taskkill /F /IM bucle.exe".',
+              text: '💡 DIAGNÓSTICO SMR: El lag del sistema se debe al estrangulamiento térmico provocado por "bucle.exe" (PID 4812) al 99% de CPU. Hay que terminar ese proceso.',
             },
           ]);
           recordAuditEvent(
@@ -3714,7 +3806,7 @@ export default function App() {
           setSpeaker('alice');
           setAliceExpression('worried');
           setDialogText(
-            '¡El informe de "powercfg /energy" lo explica todo! El equipo sufre lag porque "bucle.exe" (PID 4812) mantiene la CPU al 99.2%, bloquea los estados de reposo C-State y dispara el Thermal Throttling a 94°C. ¡Mátalo con "taskkill /F /IM bucle.exe"!'
+            '¡El informe de "powercfg /energy" lo explica todo! El equipo sufre lag porque "bucle.exe" (PID 4812) mantiene la CPU al 99.2%, bloquea los estados de reposo C-State y dispara el Thermal Throttling a 94°C. ¡Hay que terminar ese proceso cuanto antes!'
           );
         } else {
           appendLines([
@@ -3781,11 +3873,11 @@ export default function App() {
           { type: 'output', text: '-----------------------------------' },
           {
             type: 'output',
-            text: `GUID de combinación de energía: 381b4222-f694-41f0-9685-ff5bb260df2e  (Equilibrado) ${procesoTerminado ? '*' : ''}`,
+            text: `GUID de combinación de energía: 381b4222-f694-41f0-9685-ff5bb260df2e  (Equilibrado) ${!bucleActivo ? '*' : ''}`,
           },
           {
             type: 'output',
-            text: `GUID de combinación de energía: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c  (Alto rendimiento) ${!procesoTerminado ? '*' : ''}`,
+            text: `GUID de combinación de energía: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c  (Alto rendimiento) ${bucleActivo ? '*' : ''}`,
           },
           {
             type: 'output',
@@ -3829,23 +3921,23 @@ export default function App() {
           { type: 'success', text: 'Respuesta desde 127.0.0.1: bytes=32 tiempo<1ms TTL=128' },
           {
             type: 'system',
-            text: '[Diagnóstico SMR] El bucle local (loopback) responde y se ha registrado en la caché DNS ("ipconfig /displaydns"). Ahora prueba: ping 192.168.1.1',
+            text: '[Diagnóstico SMR] El bucle local (loopback) responde: la pila TCP/IP del equipo funciona. Siguiente salto lógico: la puerta de enlace.',
           },
         ]);
         setSpeaker('alice');
         setAliceExpression('happy');
         setDialogText(
-          '¡Buen diagnóstico! Hacer ping a 127.0.0.1 confirma que el protocolo TCP/IP de Windows funciona. Ahora haz ping a la puerta de enlace: ping 192.168.1.1'
+          '¡Buen diagnóstico! Hacer ping a 127.0.0.1 confirma que el protocolo TCP/IP de Windows funciona. El problema está más allá de nuestro equipo: comprueba la puerta de enlace.'
         );
         return;
       }
 
       if (cmdLower === 'ping 8.8.8.8' || cmdLower === 'ping dns.google') {
-        const isNetworkActive = cableConectado && !(currentMission === 5 && !ipRenovada);
+        const isNetworkActive = linkUp && !(currentMission === 5 && !ipRenovada);
 
         if (!isNetworkActive) {
           soundFX.playError();
-          const failureReason = !cableConectado
+          const failureReason = !linkUp
             ? 'Enlace físico desconectado en Rack (cable_conectado = false)'
             : ipLiberada
             ? 'Dirección IPv4 en 0.0.0.0 (Concesión DHCP liberada, ejecuta ipconfig /renew)'
@@ -3893,8 +3985,8 @@ export default function App() {
           setSpeaker('alice');
           setAliceExpression('worried');
           setDialogText(
-            !cableConectado
-              ? '¡[ERROR] al hacer ping a Google DNS (8.8.8.8)! Sin el cable RJ45 conectado en el Rack de Comunicaciones no podemos salir a través del gateway 192.168.1.1 hacia Internet.'
+            !linkUp
+              ? '¡[ERROR] al hacer ping a Google DNS (8.8.8.8)! Si ni siquiera llegamos a la puerta de enlace 192.168.1.1, tampoco saldremos a Internet. Empieza por lo más cercano.'
               : '¡[ERROR] al hacer ping a Google DNS (8.8.8.8)! Mientras tengamos conflicto de IP o la concesión en 0.0.0.0, el router no puede enrutar nuestros paquetes hacia Internet. Completa ipconfig /release e ipconfig /renew.'
           );
         } else {
@@ -3968,7 +4060,7 @@ export default function App() {
       }
 
       if (cmdLower === 'ping 192.168.1.1') {
-        if (!cableConectado) {
+        if (!linkUp) {
           soundFX.playError();
           recordAuditEvent(
             'EVT-1002',
@@ -3979,16 +4071,16 @@ export default function App() {
           );
           appendLines([
             { type: 'output', text: 'Haciendo ping a 192.168.1.1 con 32 bytes de datos:' },
-            { type: 'error', text: 'Tiempo de espera agotado para esta solicitud.' },
-            { type: 'error', text: 'Tiempo de espera agotado para esta solicitud.' },
-            { type: 'error', text: 'Tiempo de espera agotado para esta solicitud.' },
-            { type: 'error', text: 'Tiempo de espera agotado para esta solicitud.' },
+            { type: 'error', text: 'PING: error en la transmisión. Error general.' },
+            { type: 'error', text: 'PING: error en la transmisión. Error general.' },
+            { type: 'error', text: 'PING: error en la transmisión. Error general.' },
+            { type: 'error', text: 'PING: error en la transmisión. Error general.' },
             { type: 'warning', text: 'Paquetes: enviados = 4, recibidos = 0, perdidos = 4 (100% perdidos).' },
           ]);
           setSpeaker('alice');
           setAliceExpression('worried');
           setDialogText(
-            '¡"Tiempo de espera agotado"! No llega ningún paquete al router 192.168.1.1. Haz clic en el "Rack de Comunicaciones" (a la derecha) para revisar si hay un cable suelto.'
+            '"Error general" no es lo mismo que "Tiempo de espera agotado": el paquete ni siquiera sale del equipo porque la tarjeta de red no tiene enlace. Eso apunta a la Capa 1. ¿Revisamos el cableado?'
           );
         } else {
           populateDefaultArpResolution();
@@ -4030,11 +4122,13 @@ export default function App() {
               text: 'Paquetes: enviados = 4, recibidos = 4, perdidos = 0 (0% perdidos). [Caché DNS actualizada: usa "ipconfig /displaydns"]',
             },
           ]);
-          markMissionComplete(1);
-          setSpeaker('alice');
-          setDialogText(
-            '¡Genial! El router 192.168.1.1 responde en 1ms sin perder paquetes y su nombre se ha cargado en la caché DNS ("ipconfig /displaydns"). ¡Has completado la Misión 1!'
-          );
+          if (currentMission === 1) {
+            markMissionComplete(1);
+            setSpeaker('alice');
+            setDialogText(
+              '¡Genial! El router 192.168.1.1 responde en 1ms sin perder paquetes y su nombre se ha cargado en la caché DNS ("ipconfig /displaydns"). ¡Has completado la Misión 1!'
+            );
+          }
         }
       } else {
         appendLines([
@@ -4050,6 +4144,20 @@ export default function App() {
     // MISIÓN 2: BOOTREC /FIXMBR & BOOTREC /FIXBOOT (también acepta .\bootrec.exe)
     const normalizedBootCmd = cmdLower.replace(/^\.\\/, '').replace('bootrec.exe', 'bootrec');
     if (normalizedBootCmd.startsWith('bootrec')) {
+      if (currentMission !== 2 || winReExited) {
+        soundFX.playError();
+        appendLines([
+          {
+            type: 'error',
+            text: "'bootrec' no se reconoce como un comando interno o externo, programa o archivo por lotes ejecutable.",
+          },
+          {
+            type: 'system',
+            text: '[SMR] bootrec.exe solo existe en el entorno de recuperación (WinRE, X:\\Sources), no en un Windows arrancado con normalidad.',
+          },
+        ]);
+        return;
+      }
       if (!usbInsertado) {
         soundFX.playError();
         recordAuditEvent(
@@ -4125,28 +4233,90 @@ export default function App() {
         ]);
       } else {
         appendLines([
-          { type: 'warning', text: 'Usa: bootrec /fixmbr y a continuación bootrec /fixboot' },
+          { type: 'output', text: 'BOOTREC.EXE - Herramienta de recuperación de Windows' },
+          { type: 'output', text: '  /FIXMBR      Escribe un registro de arranque maestro (MBR) compatible en el disco del sistema.' },
+          { type: 'output', text: '  /FIXBOOT     Escribe un nuevo sector de arranque en la partición del sistema.' },
+          { type: 'output', text: '  /SCANOS      Busca instalaciones de Windows en todos los discos.' },
+          { type: 'output', text: '  /REBUILDBCD  Busca instalaciones de Windows y permite agregarlas al almacén BCD.' },
         ]);
       }
       return;
     }
 
     // MISIÓN 3: ANTIVIRUS_SETUP.EXE /S (soporta ejecución en Descargas o ruta relativa Descargas\antivirus_setup.exe /S)
-    if (cmdLower.includes('antivirus_setup')) {
+    if (/^"?[^ ]*antivirus_setup(\.exe)?"?(\s|$)/.test(cmdLower)) {
       if (cmdLower.includes('/?') || cmdLower.includes('--help')) {
         appendLines([
           { type: 'system', text: 'Parámetros del Instalador Corporativo (antivirus_setup.exe):' },
-          { type: 'output', text: '  /S          Modo Silencioso (Silent): Instala en segundo plano sin GUI.' },
+          { type: 'output', text: '  /S          Modo Silencioso (Silent): instala en segundo plano sin GUI. Distingue mayúsculas.' },
           { type: 'output', text: '  /D=<ruta>   Directorio de instalación personalizado.' },
         ]);
         return;
       }
 
-      const normalizedAv = cmdLower
-        .replace(/^\.\\/, '')
-        .replace(/^descargas\\/, '');
+      const avPathMatch = cmdLower.match(/^"?(.*?)antivirus_setup(?:\.exe)?"?(?:\s|$)/);
+      const avPrefix = (avPathMatch?.[1] || '').replace(/^\.\\/, '');
+      const avReachable =
+        avPrefix === ''
+          ? effectiveDir === 'C:\\Users\\Tecnico\\Descargas'
+          : avPrefix === 'descargas\\'
+          ? effectiveDir === 'C:\\Users\\Tecnico'
+          : avPrefix === 'c:\\users\\tecnico\\descargas\\';
+      if (!avReachable) {
+        soundFX.playError();
+        appendLines([
+          {
+            type: 'error',
+            text: `'${trimmed.split(' ')[0]}' no se reconoce como un comando interno o externo, programa o archivo por lotes ejecutable.`,
+          },
+          { type: 'system', text: '[SMR] El instalador no está en esta carpeta: usa "dir" para localizarlo o indica su ruta.' },
+        ]);
+        return;
+      }
+      if (currentMission !== 3) {
+        appendLines([
+          {
+            type: 'system',
+            text: 'Instalador corporativo: no hay ningún despliegue pendiente en este puesto (el Ticket #304 se trabaja en la Misión 3).',
+          },
+        ]);
+        return;
+      }
 
-      if (normalizedAv === 'antivirus_setup.exe' || normalizedAv === 'antivirus_setup') {
+      // NSIS distingue mayúsculas en sus modificadores: "/S" instala en silencio, "/s" se ignora.
+      const avArgs = trimmed.replace(/\s+/g, ' ').split(' ').slice(1);
+      const normalizedAv =
+        avArgs.length === 0
+          ? 'antivirus_setup.exe'
+          : avArgs.includes('/S')
+          ? 'antivirus_setup.exe /s'
+          : avArgs.includes('/s')
+          ? 'lowercase-s'
+          : 'other';
+
+      if (normalizedAv === 'lowercase-s') {
+        soundFX.playError();
+        setGuiWarningTriggered(true);
+        setHadGuiErrorInM3(true);
+        recordAuditEvent(
+          'EVT-3005',
+          'SOFTWARE',
+          'CRITICAL',
+          'Incidencia en despliegue de software: modificador /s ignorado',
+          'El instalador NSIS distingue mayúsculas: "/s" no es "/S" y se abrió el asistente gráfico (Ticket #304).'
+        );
+        appendLines([
+          {
+            type: 'error',
+            text: '[ADVERTENCIA] El instalador ha ignorado "/s" y ha abierto su asistente gráfico delante del usuario.',
+          },
+        ]);
+        setSpeaker('alice');
+        setAliceExpression('worried');
+        setDialogText(
+          '¡Ojo! Este instalador está hecho con NSIS y sus modificadores distinguen mayúsculas: "/s" en minúscula no significa nada para él. Consulta su ayuda y vuelve a intentarlo.'
+        );
+      } else if (normalizedAv === 'antivirus_setup.exe') {
         soundFX.playError();
         setGuiWarningTriggered(true);
         setHadGuiErrorInM3(true);
@@ -4166,12 +4336,9 @@ export default function App() {
         setSpeaker('alice');
         setAliceExpression('worried');
         setDialogText(
-          '¡Cuidado! Si olvidas el parámetro /S, salta la interfaz gráfica en pantalla e interrumpes el trabajo del nuevo empleado. Escribe: antivirus_setup.exe /S'
+          '¡Cuidado! Sin el modificador de instalación silenciosa salta el asistente gráfico en pantalla e interrumpes el trabajo del nuevo empleado. Mira qué parámetros admite el instalador.'
         );
-      } else if (
-        normalizedAv === 'antivirus_setup.exe /s' ||
-        normalizedAv === 'antivirus_setup /s'
-      ) {
+      } else if (normalizedAv === 'antivirus_setup.exe /s') {
         setGuiWarningTriggered(false);
         setAntivirusInstalado(true);
         recordAuditEvent(
@@ -4193,7 +4360,9 @@ export default function App() {
           '¡Perfecto! Con antivirus_setup.exe /S el antivirus se ha instalado en silencio sin molestar al empleado. ¡Misión 3 completada!'
         );
       } else {
-        appendLines([{ type: 'warning', text: 'Comando requerido: antivirus_setup.exe /S' }]);
+        appendLines([
+          { type: 'warning', text: 'Parámetro no reconocido. Consulta los modificadores admitidos con: antivirus_setup.exe /?' },
+        ]);
       }
       return;
     }
@@ -4206,29 +4375,59 @@ export default function App() {
         { type: 'output', text: 'System                      4  Services           148 KB' },
         { type: 'output', text: 'svchost.exe               912  Services        22.180 KB' },
         { type: 'output', text: 'explorer.exe             2140  Console         58.420 KB' },
-        !procesoTerminado
+        currentMission === 4 && !procesoTerminado
           ? {
               type: 'error',
               text: 'bucle.exe                4812  Console      1.894.520 KB [99% CPU BLOQUEADO]',
             }
           : { type: 'success', text: '-- Todos los procesos funcionan con consumo nominal --' },
       ]);
-      if (!procesoTerminado) {
+      if (currentMission === 4 && !procesoTerminado) {
         setSpeaker('alice');
         setAliceExpression('worried');
         setDialogText(
-          '¡Ahí está el culpable! "bucle.exe" (PID 4812) está consumiendo casi 1.9 GB de memoria. Ciérralo forzosamente con: taskkill /F /IM bucle.exe'
+          '¡Ahí está el culpable! "bucle.exe" (PID 4812) consume casi 1,9 GB de memoria y no responde. Hay que terminarlo desde la consola... y como está colgado, no atenderá una petición de cierre normal.'
         );
       }
       return;
     }
 
     if (cmdLower.startsWith('taskkill')) {
-      if (
-        cmdLower === 'taskkill /f /im bucle.exe' ||
-        cmdLower === 'taskkill /im bucle.exe /f' ||
-        cmdLower === 'taskkill /f /pid 4812'
-      ) {
+      const tkTokens = cmdLower.split(' ').slice(1);
+      const tkForce = tkTokens.includes('/f');
+      const tkImIdx = tkTokens.indexOf('/im');
+      const tkPidIdx = tkTokens.indexOf('/pid');
+      const tkTargetsBucle =
+        (tkImIdx >= 0 && tkTokens[tkImIdx + 1] === 'bucle.exe') ||
+        (tkPidIdx >= 0 && tkTokens[tkPidIdx + 1] === '4812');
+      const bucleRunning = currentMission === 4 && !procesoTerminado;
+      if (tkTargetsBucle && !bucleRunning) {
+        soundFX.playError();
+        appendLines([
+          {
+            type: 'error',
+            text:
+              tkImIdx >= 0
+                ? 'ERROR: no se encontró el proceso "bucle.exe".'
+                : 'ERROR: no se encontró el proceso "4812".',
+          },
+        ]);
+        return;
+      }
+      if (tkTargetsBucle && !tkForce) {
+        soundFX.playError();
+        appendLines([
+          { type: 'error', text: 'ERROR: no se pudo terminar el proceso "bucle.exe" con PID 4812.' },
+          { type: 'error', text: 'Motivo: este proceso solo se puede terminar forzosamente (con la opción /F).' },
+        ]);
+        setSpeaker('alice');
+        setAliceExpression('thinking');
+        setDialogText(
+          'Sin forzar, taskkill solo le pide al programa que se cierre, y un proceso colgado no atiende esa petición. ¿Qué modificador obliga al sistema a terminarlo?'
+        );
+        return;
+      }
+      if (tkTargetsBucle && tkForce) {
         setProcesoTerminado(true);
         recordAuditEvent(
           'EVT-4012',
@@ -4249,16 +4448,18 @@ export default function App() {
           '¡Proceso rebelde eliminado! La oficina vuelve a la normalidad sin fallos ni lag. ¡Misión 4 completada!'
         );
       } else {
-        appendLines([{ type: 'warning', text: 'Escribe: taskkill /F /IM bucle.exe (o /F /PID 4812)' }]);
+        appendLines([
+          { type: 'warning', text: 'Sintaxis: TASKKILL [/F] { /IM nombre_imagen | /PID id_proceso }' },
+        ]);
       }
       return;
     }
 
     // MISIÓN 5 Y DIAGNÓSTICO DE RED: IPCONFIG, IPCONFIG /ALL, /RELEASE & /RENEW
     if (cmdLower.startsWith('ipconfig')) {
-      const isPhysicalDisconnected = currentMission === 1 && !cableConectado;
+      const isPhysicalDisconnected = currentMission === 1 && !linkUp;
       const currentIpv4Label = isPhysicalDisconnected
-        ? '169.254.42.18 (APIPA - Sin enlace al DHCP)'
+        ? '(sin dirección: medios desconectados)'
         : currentMission === 5
         ? ipRenovada
           ? '192.168.1.105 (Preferido - Concesión activa)'
@@ -4273,6 +4474,32 @@ export default function App() {
           : currentMission === 5 && ipLiberada && !ipRenovada
           ? 'warning'
           : 'success';
+
+      // Sin enlace físico Windows no asigna ninguna IP (ni siquiera APIPA): muestra "medios desconectados".
+      if (isPhysicalDisconnected && (cmdLower === 'ipconfig' || cmdLower === 'ipconfig /all')) {
+        appendLines([
+          { type: 'system', text: 'Configuración IP de Windows' },
+          { type: 'output', text: '' },
+          { type: 'output', text: 'Adaptador de Ethernet Ethernet0:' },
+          { type: 'output', text: '' },
+          { type: 'error', text: '   Estado de los medios. . . . . . . . . . . : medios desconectados' },
+          { type: 'output', text: '   Sufijo DNS específico para la conexión. . : cyberacademy.local' },
+          ...(cmdLower === 'ipconfig /all'
+            ? [
+                { type: 'output' as const, text: '   Descripción . . . . . . . . . . . . . . . : Intel(R) PRO/1000 MT Network Connection' },
+                { type: 'output' as const, text: '   Dirección física. . . . . . . . . . . . . : 00-1A-2B-3C-4D-5E' },
+                { type: 'output' as const, text: '   DHCP habilitado . . . . . . . . . . . . . : sí' },
+                { type: 'output' as const, text: '   Configuración automática habilitada . . . : sí' },
+              ]
+            : []),
+        ]);
+        setSpeaker('alice');
+        setAliceExpression('thinking');
+        setDialogText(
+          '"Medios desconectados": la tarjeta no detecta señal en el cable, así que Windows ni siquiera tiene IP. Fíjate en que no es una IP APIPA (169.254.x.x): esa aparecería si hubiera enlace pero el servidor DHCP no contestara.'
+        );
+        return;
+      }
 
       if (cmdLower === 'ipconfig') {
         appendLines([
@@ -4293,7 +4520,7 @@ export default function App() {
         ]);
       } else if (cmdLower === 'ipconfig /all') {
         const shortIp = isPhysicalDisconnected
-          ? '169.254.42.18'
+          ? '(sin IP)'
           : currentMission === 5
           ? ipRenovada
             ? '192.168.1.105'
@@ -4347,7 +4574,7 @@ export default function App() {
           { type: 'output', text: '   Puerta de enlace predeterminada : 192.168.1.1' },
           {
             type: 'system',
-            text: '   Servidor DHCP . . . . . . . . . : 192.168.1.1 (Ámbito: 192.168.1.100 - .200)',
+            text: '   Servidor DHCP . . . . . . . . . : 192.168.1.1 (Ámbito: 192.168.1.50 - .200)',
           },
           {
             type: 'system',
@@ -4378,7 +4605,7 @@ export default function App() {
           },
           {
             type: 'output',
-            text: '| MAC: 00-1A-2B...5E |                        | VLAN 10 Soporte    |      | DHCP: .100-.200 Activo|',
+            text: '| MAC: 00-1A-2B...5E |                        | VLAN 10 Soporte    |      | DHCP: .50-.200 Activo |',
           },
           {
             type: 'output',
@@ -4402,6 +4629,31 @@ export default function App() {
         setAliceExpression('happy');
         setDialogText(
           '¡Excelente diagnóstico con ipconfig /all! Ahí tienes la dirección MAC física, el servidor DHCP (192.168.1.1), los tres servidores DNS (192.168.1.1, 8.8.8.8 y 1.1.1.1) y el esquema visual de nuestra red local.'
+        );
+      } else if ((cmdLower === 'ipconfig /release' || cmdLower === 'ipconfig /renew') && !linkUp) {
+        soundFX.playError();
+        appendLines([
+          {
+            type: 'error',
+            text: 'No se puede realizar ninguna operación en Ethernet0 mientras los medios estén desconectados.',
+          },
+        ]);
+      } else if ((cmdLower === 'ipconfig /release' || cmdLower === 'ipconfig /renew') && currentMission !== 5) {
+        appendLines(
+          cmdLower === 'ipconfig /release'
+            ? [
+                { type: 'output', text: 'Adaptador de Ethernet Ethernet0:' },
+                { type: 'warning', text: '   Dirección IPv4. . . . . . . . . . . . . . : 0.0.0.0 (Concesión liberada)' },
+                {
+                  type: 'system',
+                  text: '[SMR] Este puesto no tiene ningún conflicto de IP: la concesión se recupera automáticamente. (El conflicto se trabaja en la Misión 5.)',
+                },
+              ]
+            : [
+                { type: 'output', text: 'Adaptador de Ethernet Ethernet0:' },
+                { type: 'success', text: '   Dirección IPv4. . . . . . . . . . . . . . : 192.168.1.105' },
+                { type: 'output', text: '   Puerta de enlace predeterminada . . . . . : 192.168.1.1' },
+              ]
         );
       } else if (cmdLower === 'ipconfig /release') {
         soundFX.playCableSnap();
@@ -4740,8 +4992,16 @@ export default function App() {
   };
 
   // MISIÓN 6: RESPUESTAS HELPDESK
-  const handleHelpdeskChoice = (choiceType: 'aggressive' | 'passive' | 'empathetic') => {
-    if (choiceType === 'aggressive') {
+  const handleHelpdeskChoice = (choiceType: HelpdeskChoice) => {
+    if (choiceType === 'cold') {
+      soundFX.playError();
+      setHadHelpdeskMistakeInM6(true);
+      setSpeaker('alice');
+      setAliceExpression('thinking');
+      setDialogText(
+        'Técnicamente vas bien encaminado, pero le has soltado una ruta de carpetas a alguien que está al borde del llanto y le has dejado solo. En Helpdesk primero se calma a la persona y luego se resuelve CON ella.'
+      );
+    } else if (choiceType === 'aggressive') {
       soundFX.playError();
       setHadHelpdeskMistakeInM6(true);
       setSpeaker('alice');
@@ -4755,14 +5015,14 @@ export default function App() {
       setSpeaker('alice');
       setAliceExpression('thinking');
       setDialogText(
-        'Esa respuesta es pasiva y deja al usuario sin su informe de 3 horas. ¡Prueba la respuesta empática que revisa la ruta de Autorecuperación!'
+        'Esa respuesta es pasiva y además falsa: Word guarda copias automáticas. Rendirse deja al usuario sin su informe de 3 horas.'
       );
     } else {
       setHelpdeskResuelto(true);
       markMissionComplete(6);
       setSpeaker('alice');
       setDialogText(
-        '¡Misión 6 superada! Has tranquilizado al usuario con empatía y recuperado su informe (.asd) desde Archivo > Información > Autorecuperación. ¡Revisa tus Logros e Insignias arriba!'
+        '¡Misión 6 superada! Has tranquilizado al usuario con empatía y recuperado su informe (.asd) desde Archivo > Información > Administrar documento > Recuperar documentos no guardados. ¡Revisa tus Logros e Insignias arriba!'
       );
     }
   };
@@ -4811,13 +5071,19 @@ export default function App() {
     }
   };
 
+  // Solo cuenta el primer intento: después de responder, la pregunta queda cerrada
+  const quizAlreadyAnswered =
+    completedQuizzes.includes(currentMission) || failedQuizzes.includes(currentMission);
+
   const handleQuizAnswer = (optionIdx: number) => {
+    if (quizAlreadyAnswered) return;
     setQuizSelectedAnswer(optionIdx);
     if (optionIdx === activeTheory.examQuestion.correctIndex) {
       soundFX.playSuccess();
       setCompletedQuizzes((prev) => (prev.includes(currentMission) ? prev : [...prev, currentMission]));
     } else {
       soundFX.playError();
+      setFailedQuizzes((prev) => (prev.includes(currentMission) ? prev : [...prev, currentMission]));
     }
   };
 
@@ -4980,7 +5246,7 @@ export default function App() {
                 title="Visitar Un Fantasma en el Sistema — https://www.unfantasmaenelsistema.com/"
               >
                 <img
-                  src="/assets/aistudio/icono_81a3db5b.png"
+                  src={iconoUrl}
                   alt="Logo Un Fantasma en el Sistema"
                   referrerPolicy="no-referrer"
                   className="w-7 h-7 object-contain group-hover:scale-110 transition-transform drop-shadow"
@@ -5185,15 +5451,17 @@ export default function App() {
                 Pistas: <strong className={hintsUsedCount === 0 ? 'text-emerald-300' : 'text-amber-300'}>{hintsUsedCount}</strong>
               </span>
               <span className="hidden xl:inline text-slate-500">·</span>
-              <button
-                type="button"
-                onClick={downloadStandaloneHTML}
-                className="inline-flex items-center gap-1 text-sky-300 hover:underline cursor-pointer"
-                title="Descargar en un único archivo index.html autónomo"
-              >
-                <Download className="w-3 h-3" />
-                <span className="hidden sm:inline">Exportar HTML</span>
-              </button>
+              {import.meta.env.MODE !== 'offline' && (
+                <a
+                  href={`${import.meta.env.BASE_URL}cyberacademy-smr-offline.html`}
+                  download="cyberacademy-smr-offline.html"
+                  className="inline-flex items-center gap-1 text-sky-300 hover:underline cursor-pointer"
+                  title="Descarga la app completa en un único archivo .html que funciona sin conexión (Moodle, pendrive, aula sin Internet)"
+                >
+                  <Download className="w-3 h-3" />
+                  <span className="hidden sm:inline">Versión offline</span>
+                </a>
+              )}
               <button
                 type="button"
                 onClick={() => {
@@ -5215,7 +5483,7 @@ export default function App() {
            ================================================================= */}
         <OfficeSceneSVG
           currentMission={currentMission}
-          cableConectado={cableConectado}
+          cableConectado={linkUp}
           usbRecogido={usbRecogido}
           usbInsertado={usbInsertado}
           bootReparado={mbrFixed && bootFixed}
@@ -5230,8 +5498,7 @@ export default function App() {
           <div className="absolute top-24 left-4 z-20 bg-rose-950/95 border-2 border-rose-400 text-rose-100 px-3.5 py-2 rounded-xl shadow-xl flex items-center gap-2.5 text-xs pointer-events-none">
             <Cpu className="w-4 h-4 text-rose-300 shrink-0" />
             <span>
-              <strong>ALERTA CPU 99%:</strong> Ejecuta <code>tasklist</code> y{' '}
-              <code>taskkill /F /IM bucle.exe</code>
+              <strong>ALERTA CPU 99%:</strong> el sistema no responde con normalidad.
             </span>
           </div>
         )}
@@ -5244,7 +5511,7 @@ export default function App() {
                 Windows ha detectado un conflicto de dirección IP (192.168.1.50)
               </div>
               <div>
-                Ejecuta <code>ipconfig /release</code> y luego <code>ipconfig /renew</code> en el terminal.
+                Otro equipo de la red usa esta dirección. Puede que pierdas la conexión.
               </div>
             </div>
           </div>
@@ -5299,7 +5566,7 @@ export default function App() {
         >
           <div
             className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full border-[3.5px] transition-transform group-hover:scale-108 flex flex-col items-center justify-center ${
-              currentMission === 1 && !cableConectado
+              currentMission === 1 && !linkUp
                 ? 'border-amber-300 bg-amber-400/20 shadow-[0_0_28px_rgba(251,191,36,0.95),inset_0_0_14px_rgba(251,191,36,0.6)]'
                 : 'border-white/95 bg-white/10 shadow-[0_0_24px_rgba(255,255,255,0.95),inset_0_0_14px_rgba(255,255,255,0.6)]'
             }`}
@@ -5313,7 +5580,7 @@ export default function App() {
             >
               Rack de Comunicaciones
             </span>
-            {currentMission === 1 && !cableConectado && (
+            {currentMission === 1 && !linkUp && (
               <span className="mt-1 px-2 py-0.5 rounded bg-amber-400 text-slate-950 font-bold text-[10px] shadow">
                 ¡Cable suelto!
               </span>
@@ -5326,7 +5593,7 @@ export default function App() {
               <div className="text-[11px] font-display font-bold text-amber-300 flex items-center justify-between">
                 <span>Armario Rack 42U (Capa 1)</span>
                 <span className="font-mono text-[9px] text-sky-300">
-                  {cableConectado ? 'LINK UP' : 'WAN DOWN'}
+                  {linkUp ? 'LINK UP' : 'LINK DOWN'}
                 </span>
               </div>
               <p className="text-[10px] text-slate-200 leading-snug mt-0.5">
@@ -5391,7 +5658,7 @@ export default function App() {
             className={`absolute z-30 flex flex-col transition-all ${activeTerminalTheme.windowContainer} ${
               terminalExpanded
                 ? 'left-[8%] right-[8%] top-[18%] bottom-[30%]'
-                : 'left-[39%] top-[32%] w-[340px] sm:w-[450px] lg:w-[490px] h-[265px] sm:h-[285px]'
+                : 'left-[max(39%,calc(31%_+_104px))] top-[calc(28%_+_124px)] w-[340px] sm:w-[min(450px,calc(69%_-_112px))] lg:w-[490px] h-[min(285px,calc(72%_-_290px))] min-h-[150px]'
             }`}
           >
             {/* Barra de título / Menú del Terminal adaptable al tema activo */}
@@ -5676,15 +5943,16 @@ export default function App() {
               <TerminalAuditPanel
                 entries={auditLog}
                 systemState={{
-                  cableConectado,
+                  // Cada avería solo está pendiente dentro de su propia misión
+                  cableConectado: linkUp,
                   usbRecogido,
                   usbInsertado,
-                  mbrFixed,
-                  bootFixed,
-                  antivirusInstalado,
-                  procesoTerminado,
-                  ipLiberada,
-                  ipRenovada,
+                  mbrFixed: mbrFixed || currentMission !== 2,
+                  bootFixed: bootFixed || currentMission !== 2,
+                  antivirusInstalado: antivirusInstalado || currentMission !== 3,
+                  procesoTerminado: !bucleActivo,
+                  ipLiberada: ipLiberada && currentMission === 5,
+                  ipRenovada: ipRenovada || currentMission !== 5,
                 }}
                 onClose={() => {
                   soundFX.playClick();
@@ -6029,30 +6297,21 @@ export default function App() {
               </button>
             </div>
 
+            <p className="text-xs text-slate-300 leading-relaxed">
+              El usuario de contabilidad está muy alterado. ¿Qué le respondes?
+            </p>
             <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => handleHelpdeskChoice('aggressive')}
-                className="w-full text-left p-2.5 rounded-xl bg-slate-950 hover:bg-rose-950/70 border border-slate-700 hover:border-rose-400 text-xs text-slate-100 transition-colors cursor-pointer"
-              >
-                <strong className="text-rose-400">1 (Agresiva/Técnica):</strong> "El fallo es de la memoria RAM, es tu culpa por no guardar"
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleHelpdeskChoice('passive')}
-                className="w-full text-left p-2.5 rounded-xl bg-slate-950 hover:bg-amber-950/60 border border-slate-700 hover:border-amber-400 text-xs text-slate-100 transition-colors cursor-pointer"
-              >
-                <strong className="text-amber-400">2 (Pasiva):</strong> "No se puede hacer nada cuando se cierra así, tendrás que repetir el informe desde cero"
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleHelpdeskChoice('empathetic')}
-                className="w-full text-left p-2.5 rounded-xl bg-slate-950 hover:bg-emerald-950/70 border border-slate-700 hover:border-emerald-400 text-xs text-slate-100 transition-colors cursor-pointer"
-              >
-                <strong className="text-emerald-400">3 (Empática y Correcta):</strong> "Tranquilo, vamos a abrir la ruta de Autorecuperación en Archivo &gt; Información, el sistema suele guardar copias de seguridad automáticas"
-              </button>
+              {helpdeskOptionOrder.map((choiceType, idx) => (
+                <button
+                  key={choiceType}
+                  type="button"
+                  onClick={() => handleHelpdeskChoice(choiceType)}
+                  className="w-full text-left p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-700 hover:border-amber-400 text-xs text-slate-100 transition-colors cursor-pointer"
+                >
+                  <strong className="text-amber-300">{String.fromCharCode(65 + idx)}.</strong>{' '}
+                  {HELPDESK_OPTIONS[choiceType]}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -6212,8 +6471,8 @@ export default function App() {
                     </div>
                     <div className="font-mono text-slate-400 mt-0.5">
                       Variable de estado:{' '}
-                      <strong className={cableConectado ? 'text-emerald-400' : 'text-rose-400'}>
-                        cable_conectado = {String(cableConectado)}
+                      <strong className={linkUp ? 'text-emerald-400' : 'text-rose-400'}>
+                        cable_conectado = {String(linkUp)}
                       </strong>
                     </div>
                   </div>
@@ -6221,14 +6480,14 @@ export default function App() {
                     type="button"
                     onClick={handleConnectCable}
                     className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-colors cursor-pointer shrink-0 ${
-                      cableConectado
+                      linkUp
                         ? 'bg-emerald-600/30 border border-emerald-400 text-emerald-300'
                         : 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-lg'
                     }`}
                   >
                     <Cable className="w-4 h-4" />
                     <span>
-                      {cableConectado
+                      {linkUp
                         ? 'Cable RJ45 Conectado (Link UP)'
                         : 'Conectar Cable RJ45 Suelto'}
                     </span>
@@ -6239,12 +6498,12 @@ export default function App() {
                   <div className="flex items-center justify-between text-[11px] font-mono text-sky-300">
                     <span>TESTER DE CONTINUIDAD UTP CAT6 · NORMA EIA/TIA-568B</span>
                     <span>
-                      {cableConectado ? `PROBANDO PIN #${testingCablePin}: OK` : 'ESPERANDO CONEXIÓN RJ45'}
+                      {linkUp ? `PROBANDO PIN #${testingCablePin}: OK` : 'ESPERANDO CONEXIÓN RJ45'}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {TIA_568B_PINS.map((p) => {
-                      const isActivePin = cableConectado && testingCablePin === p.pin;
+                      const isActivePin = linkUp && testingCablePin === p.pin;
                       return (
                         <div
                           key={p.pin}
@@ -6343,7 +6602,7 @@ export default function App() {
                     Instala el antivirus corporativo en el equipo del nuevo trabajador de forma <strong>silenciosa (desatendida)</strong> para que no aparezca ninguna ventana gráfica que interrumpa su tarea.
                   </p>
                   <p className="font-mono text-emerald-400">
-                    Comando requerido: antivirus_setup.exe /S
+                    Pista del ticket: los instaladores muestran sus parámetros con /?
                   </p>
                 </div>
                 <button
@@ -6384,16 +6643,22 @@ export default function App() {
                     {activeTheory.examQuestion.options.map((opt, idx) => {
                       const isSelected = quizSelectedAnswer === idx;
                       const isCorrect = idx === activeTheory.examQuestion.correctIndex;
+                      const revealCorrect = quizAlreadyAnswered && isCorrect;
                       return (
                         <button
                           key={idx}
                           type="button"
+                          disabled={quizAlreadyAnswered}
                           onClick={() => handleQuizAnswer(idx)}
-                          className={`w-full text-left p-2 rounded-lg border transition-colors cursor-pointer ${
-                            isSelected
-                              ? isCorrect
-                                ? 'bg-emerald-950/80 border-emerald-400 text-emerald-200 font-semibold'
-                                : 'bg-rose-950/80 border-rose-400 text-rose-200'
+                          className={`w-full text-left p-2 rounded-lg border transition-colors ${
+                            quizAlreadyAnswered ? 'cursor-default' : 'cursor-pointer'
+                          } ${
+                            isSelected && !isCorrect
+                              ? 'bg-rose-950/80 border-rose-400 text-rose-200'
+                              : (isSelected && isCorrect) || revealCorrect
+                              ? 'bg-emerald-950/80 border-emerald-400 text-emerald-200 font-semibold'
+                              : quizAlreadyAnswered
+                              ? 'bg-slate-900 border-slate-800 text-slate-400'
                               : 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-slate-200'
                           }`}
                         >
@@ -6402,14 +6667,19 @@ export default function App() {
                       );
                     })}
                   </div>
-                  {quizSelectedAnswer !== null && (
+                  {quizAlreadyAnswered && (
                     <div
                       className={`p-2 rounded text-[11px] ${
-                        quizSelectedAnswer === activeTheory.examQuestion.correctIndex
+                        completedQuizzes.includes(currentMission)
                           ? 'text-emerald-300 bg-emerald-950/40'
                           : 'text-amber-300 bg-amber-950/40'
                       }`}
                     >
+                      <strong>
+                        {completedQuizzes.includes(currentMission)
+                          ? '✔ Correcta (cuenta para la nota). '
+                          : '✘ Incorrecta: solo cuenta el primer intento. '}
+                      </strong>
                       {activeTheory.examQuestion.explanation}
                     </div>
                   )}
@@ -6444,7 +6714,7 @@ export default function App() {
                   <div className="p-3.5 rounded-xl bg-slate-950 border border-amber-400/50 flex flex-col justify-between">
                     <div className="flex items-center gap-3">
                       <img
-                        src="/assets/aistudio/icono_81a3db5b.png"
+                        src={iconoUrl}
                         alt="Un Fantasma en el Sistema"
                         referrerPolicy="no-referrer"
                         className="w-10 h-10 object-contain"

@@ -6,3 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+dist-offline/
+pages_sim/
